@@ -1,0 +1,16 @@
+[package]
+name = "knowledge-base"
+version = "0.1.0"
+authors = ["usagitoneko <hogouxian@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0.125"
+structopt = "0.3.21"
+toml = "0.5.8"
+tui = "0.14"
+termion = "1.5"
