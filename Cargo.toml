@@ -12,5 +12,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0.125"
 structopt = "0.3.21"
 toml = "0.5.8"
-tui = "0.14"
 termion = "1.5"
+tui = { version = "0.14", default-features = false, features = ['crossterm', 'serde'] }
+crossterm = { version = "0.19", features = [ "serde" ] }
+chrono = { version = "0.4", features = ["serde"] }

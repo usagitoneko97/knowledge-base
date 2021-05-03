@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 mod data;
 mod config;
+mod ui;
 
 static CONFIG_FILE: &str = "kb.conf";
 
@@ -33,29 +34,19 @@ enum KbSub {
     }
 }
 
-fn init(config_file: &PathBuf) -> std::io::Result<(config::Config)> {
+fn init <T: Into<PathBuf>> (config_file: T) -> std::io::Result<(config::Config)> {
     // init default config location
     let config;
-    config = config::Config::new(config_file)
+    let config_file_ = config_file.into();
+    config = config::Config::new(&config_file_)
         .expect("Error in reading config file");
     Ok(config)
 }
 
 fn main() {
-    let args = Kb::from_args();
-    let config = init(&args.config).unwrap();
-    match args.cmd {
-        KbSub::Add{topic, content, tag, descriptions} => {
-            let mut d = data::Handler::new(&config);
-            let knowledge = Knowledge::new(topic.clone(), content,
-                                           descriptions);
-            // d.add_knowledge(&knowledge);
-            // knowledge.write(&config);
-            d.read_all_files();
-            println!("{}", d.datas.len());
-            for (_, k) in d.datas.iter() {
-                println!("{}", k);
-            }
-        }
-    };
+    let config = init(CONFIG_FILE).unwrap();
+    let mut d = data::Handler::new(&config);
+    d.read_all_files();
+    ui::ui(d);
 }
+

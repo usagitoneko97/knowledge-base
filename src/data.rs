@@ -12,10 +12,10 @@ use toml::ser::Error::KeyNotString;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Knowledge {
-    title: String,
-    tag: Vec<String>,
-    text: String,
-    descriptions: String
+    pub title: String,
+    pub tag: Vec<String>,
+    pub text: String,
+    pub descriptions: String
 }
 
 impl Knowledge {
@@ -33,7 +33,6 @@ impl Knowledge {
         let mut res = std::fs::read_to_string(f).unwrap();
         let mut title: String = String::new();
         let mut descriptions = String::new();
-        let mut content = String::new();
         for line in res.split("\n").into_iter() {
             if line.contains("# Title:") {
                 let t: String = line.replace("# Title:", "");
@@ -44,12 +43,11 @@ impl Knowledge {
                 descriptions = t.trim().into();
                 continue;
             }
-            content += line;
         }
         Knowledge{
             title: title.to_string(), descriptions: descriptions.to_string(),
             tag: Vec::new(),
-            text: content.trim().to_string()
+            text: res
         }
     }
 
