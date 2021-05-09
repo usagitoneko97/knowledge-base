@@ -16,13 +16,38 @@ use tui::{
         Block
     }
 };
-use crate::data::Handler;
+use crate::data::{Handler, Knowledge};
 use serde::__private::ser::serialize_tagged_newtype;
+use std::collections::HashMap;
 
 enum Event<I> {
     Input(I),
     Tick
 }
+
+enum RightItem<'a> {
+    Knowledge(&'a Knowledge),
+    Parent(String)
+}
+
+fn get_list<'a>(mapping: &HashMap<String, Vec<&'a Knowledge>>, hierarchy: &Option<String>) -> Vec<RightItem<'a>>{
+    match hierarchy {
+        Some(s) => {
+            match mapping.get(s) {
+                Some(knowledges) => {
+                    knowledges.iter().map(|k| RightItem::Knowledge(*k)).collect()
+                }
+                None => {
+                    vec![]
+                }
+            }
+        }
+        None => {
+            mapping.keys().map(|e| e.clone()).map(RightItem::Parent).collect()
+        }
+    }
+}
+
 
 pub fn ui(h: Handler) {
     enable_raw_mode().expect("Enabling raw mode!");
@@ -53,7 +78,10 @@ pub fn ui(h: Handler) {
     terminal.clear().expect("Error in clearing terminal");
     let mut knowledge_state = ListState::default();
     knowledge_state.select(Some(0));
+    let mut hierarchy_state: Option<String> = None;
+    let mapping = h.get_mapping();
     loop {
+        let display_list = get_list(&mapping, &hierarchy_state);
         terminal.draw(|rect| {
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
@@ -65,13 +93,45 @@ pub fn ui(h: Handler) {
                 .style(Style::default().fg(Color::White))
                 .title("knowledge-base!")
                 .border_type(BorderType::Rounded);
-            let item_list: Vec<_> = h.datas.values().map(|item| {
-                ListItem::new(Span::from(Span::styled(item.title.clone(),
-                                                      Style::default())))
+            // get the left item list to display
+            let item_list: Vec<_> = display_list.iter().map(|item| {
+                match item {
+                    RightItem::Knowledge(k) => {
+                        ListItem::new(Span::from(Span::styled(k.title.clone(),
+                                                              Style::default())))
+                    }
+                    RightItem::Parent(p) => {
+                        ListItem::new(Span::from(Span::styled(p,
+                                                              Style::default())))
+                    }
+                }
             }).collect();
-            let values: Vec<_> = h.datas.values().collect();
-            let text = Text::from(values[knowledge_state.selected().unwrap()].text.clone());
-            let descriptions_widget = Paragraph::new(text).block(main_block.clone().title("text"));
+            let right_item_text = match display_list.get(knowledge_state.selected().unwrap()) {
+                Some(e) => {
+                    match e {
+                        RightItem::Knowledge(k) => {
+                            Text::from(k.text.clone())
+                        }
+                        RightItem::Parent(p) => {
+                            match mapping.get(p) {
+                                Some(item) => {
+                                    let all_titles: Vec<_> = item.iter()
+                                        .map(|k| k.title.clone())
+                                        .collect();
+                                    Text::from(all_titles.join("\n"))
+                                }
+                                None => {
+                                    Text::from("Error! Can't find it in mapping!")
+                                }
+                            }
+                        }
+                    }
+                }
+                None => {
+                    Text::from("Error! Selection overshoot!")
+                }
+            };
+            let descriptions_widget = Paragraph::new(right_item_text).block(main_block.clone().title("text"));
             let main_list = List::new(item_list).block(main_block.clone())
                 .highlight_style(Style::default()
                     .bg(Color::Yellow)
@@ -89,7 +149,7 @@ pub fn ui(h: Handler) {
                 }
                 KeyCode::Down | KeyCode::Char('j') => {
                     if let Some(selected) = knowledge_state.selected() {
-                        if selected >= h.datas.len()-1 {
+                        if selected >= display_list.len() -1 {
                             knowledge_state.select(Some(0));
                         } else {
                             knowledge_state.select(Some(selected + 1));
@@ -99,11 +159,31 @@ pub fn ui(h: Handler) {
                 KeyCode::Up | KeyCode::Char('k') => {
                     if let Some(selected) = knowledge_state.selected() {
                         if selected == 0 {
-                            knowledge_state.select(Some(h.datas.len()-1));
+                            knowledge_state.select(Some(display_list.len()-1));
                         } else {
                             knowledge_state.select(Some(selected - 1));
                         }
                     }
+                }
+                KeyCode::Enter | KeyCode::Char('l') => {
+                    hierarchy_state = match display_list.get(knowledge_state.selected().unwrap()) {
+                        Some(e) => {
+                            match e {
+                                RightItem::Knowledge(k) => {
+                                    hierarchy_state
+                                }
+                                RightItem::Parent(p) => {
+                                    Some(p.clone())
+                                }
+                            }
+                        }
+                        None => {
+                            hierarchy_state
+                        }
+                    };
+                }
+                KeyCode::Char('h') => {
+                    hierarchy_state = None;
                 }
                 _ => {}
             }

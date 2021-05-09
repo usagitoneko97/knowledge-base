@@ -1,8 +1,9 @@
 use std::fs::read_to_string;
 use structopt::StructOpt;
-use crate::data::Knowledge;
+use crate::data::{Knowledge, KnowledgeEntry, Entry};
 use std::path::{PathBuf, Path};
 use std::str::FromStr;
+use crossterm::event::KeyCode::Enter;
 
 mod data;
 mod config;
@@ -43,8 +44,15 @@ fn init <T: Into<PathBuf>> (config_file: T) -> std::io::Result<(config::Config)>
     Ok(config)
 }
 
+fn move_(x: Entry) -> Entry {
+    return x;
+}
+
+enum C<T> {
+    Field(T)
+}
 fn main() {
-    let config = init(CONFIG_FILE).unwrap();
+    let mut config = init(CONFIG_FILE).unwrap();
     let mut d = data::Handler::new(&config);
     d.read_all_files();
     ui::ui(d);

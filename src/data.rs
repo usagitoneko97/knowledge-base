@@ -8,14 +8,38 @@ use serde::{Deserialize, Serialize};
 use core::fmt;
 use crate::config::Config;
 use toml::ser::Error::KeyNotString;
+use glob::glob;
 
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Default)]
 pub struct Knowledge {
     pub title: String,
     pub tag: Vec<String>,
     pub text: String,
-    pub descriptions: String
+    pub descriptions: String,
+}
+
+#[derive(Debug)]
+pub struct Entry {
+    pub keyword: String,
+    pub next: Vec<Box<KnowledgeEntry>>
+}
+
+#[derive(Debug)]
+pub enum KnowledgeEntry {
+    Normal(Knowledge),
+    Entry(Entry)
+}
+
+impl KnowledgeEntry {
+    pub fn get_entry_mut (&mut self) -> Option<&mut Vec<Box<KnowledgeEntry>>> {
+        match self {
+            KnowledgeEntry::Entry(e) => {
+                Some(&mut e.next)
+            }
+            KnowledgeEntry::Normal(k) => {None}
+        }
+    }
 }
 
 impl Knowledge {
@@ -24,15 +48,16 @@ impl Knowledge {
             title,
             tag: Vec::new(),
             text,
-            descriptions
+            descriptions,
         }
     }
 
-    pub fn from_file<T: AsRef<Path>> (file: T) -> Self {
-        let f = file.as_ref();
+    pub fn from_file<P: Into<PathBuf>> (file: P) -> Self {
+        let f = file.into();
         let mut res = std::fs::read_to_string(f).unwrap();
         let mut title: String = String::new();
         let mut descriptions = String::new();
+        let mut tags: Vec<String> = vec![];
         for line in res.split("\n").into_iter() {
             if line.contains("# Title:") {
                 let t: String = line.replace("# Title:", "");
@@ -42,12 +67,16 @@ impl Knowledge {
                 let t: String = line.replace("# Descriptions:", "");
                 descriptions = t.trim().into();
                 continue;
+            } else if line.contains("# Tags: ") {
+                let t = line.replace("# Tags:", "");
+                tags = t.split(",")
+                    .map(|e| e.trim().to_owned()).collect();
             }
         }
         Knowledge{
             title: title.to_string(), descriptions: descriptions.to_string(),
-            tag: Vec::new(),
-            text: res
+            tag: tags,
+            text: res,
         }
     }
 
@@ -76,32 +105,47 @@ impl fmt::Display for Knowledge{
 }
 
 pub struct Handler <'a> {
-    pub datas: HashMap<String, Knowledge>,
+    pub data: Vec<Knowledge>,
     config: &'a Config
+}
+
+enum ContainVec<T> {
+    Yes(T),
+    No,
 }
 
 impl <'a> Handler <'a>  {
     pub fn new (config: &'a Config) -> Self {
-        Handler{
-            datas: HashMap::<String, Knowledge>::new(),
+        Handler {
+            data: vec![],
             config
         }
     }
 
-    pub fn add_knowledge(&mut self, k: Knowledge) {
-        self.datas.insert(k.title.clone(), k);
-    }
-
     pub fn read_all_files(&mut self) {
         for dir in self.config.data_directories.iter() {
-            let f = std::fs::read_dir(dir).unwrap();
-            for file in f {
-                let file_path = file.unwrap().path();
-                if file_path.extension().unwrap() == self.config.extension.as_str() {
-                    let k = Knowledge::from_file(file_path);
-                    self.datas.insert(k.title.clone(), k);
+            let mut glob_pattern = dir.clone();
+            glob_pattern = glob_pattern + "/**/" + "*." + &self.config.extension;
+            for entry in glob(&glob_pattern).expect("Failed to read glob pattern") {
+                match entry {
+                    Ok(f) => {
+                        let k = Knowledge::from_file(f);
+                        self.data.push(k);
+                    }
+                    _ => {}
                 }
             }
         }
+    }
+    pub fn get_mapping(&self) -> HashMap<String, Vec<&Knowledge>> {
+        let mut mapping: HashMap<String, Vec<&Knowledge>> = HashMap::new();
+        for k in self.data.iter() {
+            for tag in k.tag.clone() {
+                mapping.entry(tag.clone()).or_default().push(k);
+            }
+        }
+        // println!("{:?}", mapping);
+        mapping
+
     }
 }
