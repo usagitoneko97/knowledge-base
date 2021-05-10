@@ -17,7 +17,6 @@ use tui::{
     }
 };
 use crate::data::{Handler, Knowledge};
-use serde::__private::ser::serialize_tagged_newtype;
 use std::collections::HashMap;
 
 enum Event<I> {

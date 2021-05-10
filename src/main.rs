@@ -1,13 +1,15 @@
 use std::fs::read_to_string;
 use structopt::StructOpt;
-use crate::data::{Knowledge, KnowledgeEntry, Entry};
+use crate::data::{Knowledge};
 use std::path::{PathBuf, Path};
 use std::str::FromStr;
 use crossterm::event::KeyCode::Enter;
 
 mod data;
 mod config;
-mod ui;
+mod views;
+
+pub use crate::views::*;
 
 static CONFIG_FILE: &str = "kb.conf";
 
@@ -44,13 +46,10 @@ fn init <T: Into<PathBuf>> (config_file: T) -> std::io::Result<(config::Config)>
     Ok(config)
 }
 
-fn move_(x: Entry) -> Entry {
-    return x;
-}
-
 enum C<T> {
     Field(T)
 }
+
 fn main() {
     let mut config = init(CONFIG_FILE).unwrap();
     let mut d = data::Handler::new(&config);

@@ -19,29 +19,6 @@ pub struct Knowledge {
     pub descriptions: String,
 }
 
-#[derive(Debug)]
-pub struct Entry {
-    pub keyword: String,
-    pub next: Vec<Box<KnowledgeEntry>>
-}
-
-#[derive(Debug)]
-pub enum KnowledgeEntry {
-    Normal(Knowledge),
-    Entry(Entry)
-}
-
-impl KnowledgeEntry {
-    pub fn get_entry_mut (&mut self) -> Option<&mut Vec<Box<KnowledgeEntry>>> {
-        match self {
-            KnowledgeEntry::Entry(e) => {
-                Some(&mut e.next)
-            }
-            KnowledgeEntry::Normal(k) => {None}
-        }
-    }
-}
-
 impl Knowledge {
     pub fn new (title: String, text: String, descriptions: String) -> Self {
         Knowledge{
@@ -107,11 +84,6 @@ impl fmt::Display for Knowledge{
 pub struct Handler <'a> {
     pub data: Vec<Knowledge>,
     config: &'a Config
-}
-
-enum ContainVec<T> {
-    Yes(T),
-    No,
 }
 
 impl <'a> Handler <'a>  {
