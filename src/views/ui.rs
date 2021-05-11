@@ -85,6 +85,11 @@ pub fn ui(h: Handler) {
         });
         match rx.recv().unwrap() {
             Event::Input(event) => {
+                if let KeyCode::Char('q') = event.code {
+                    disable_raw_mode().expect("Error in disabling raw mode");
+                    terminal.show_cursor();
+                    break;
+                }
                 program_state.update_state(&event);
             }
             _ => {} /*
