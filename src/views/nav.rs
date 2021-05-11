@@ -1,73 +1,64 @@
-use tui::Frame;
-use std::path::PathBuf;
-use tui::backend::Backend;
-use tui::text::{Span, Text};
-use tui::widgets::{ListItem, Paragraph, List, Block, Borders, BorderType};
-use tui::style::{Style, Color, Modifier};
 use crate::config::Config;
+use crate::data::Knowledge;
 use crate::views::state;
 use std::fs::read_dir;
-use crate::data::Knowledge;
-use tui::layout::{Layout, Direction, Constraint};
+use std::path::PathBuf;
+use tui::backend::Backend;
+use tui::layout::{Constraint, Direction, Layout};
+use tui::style::{Color, Modifier, Style};
+use tui::text::{Span, Text};
+use tui::widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph};
+use tui::Frame;
 
+pub fn draw_views<T: Backend>(
+    f: &mut Frame<T>,
+    program_state: &mut state::ProgramState,
+) {
+    match program_state.view_state {
+        state::ViewState::FileView(ref mut file_view) => {
+            draw_files_view(f, file_view, program_state.list_state)
+        }
+        _ => {}
+    }
+}
 
 macro_rules! all_files {
     ($file:expr) => {{
-        let item: Vec<_> = std::fs::read_dir($file).unwrap()
+        let item: Vec<_> = std::fs::read_dir($file)
+            .unwrap()
             .map(|e| e.unwrap().file_name().into_string().unwrap())
             .collect();
         item
-    }
-    };
+    }};
 }
 
-fn draw_files_view<T: Backend>(mut f: Frame<T>, config: &Config, state: &mut state::ProgramState) {
+pub fn draw_files_view<T: Backend>(
+    f: &mut Frame<T>,
+    file_state: &mut state::FileState,
+    list_state: &mut ListState,
+) {
     // TODO: handle multiple data directories
-    let mut file_path = PathBuf::from(config.data_directories.last().unwrap().as_str());
-    match &state.view {
-        state::View::FileView(file_view) => {
-            file_path.push(file_view.file_hierarchy.clone());
-        }
-        state::View::TagView => {}
-    }
-    let left_paths: Vec<_> = if let Ok(file_entry) = std::fs::read_dir(&file_path) {
-        file_entry
-            .filter_map(|e| {
-                let dir_entry = e.unwrap();
-                return match &dir_entry.file_type() {
-                    Ok(file) => {
-                        if file.is_file() {
-                            if dir_entry.path().extension().unwrap() == "md" {
-                                ()
-                            }
-                        }
-                        Some(ListItem::new(Span::from(Span::styled(dir_entry
-                                                                       .file_name()
-                                                                       .into_string()
-                                                                       .unwrap(),
-                                                                   Style::default()))))
-                    }
-                    Err(e) => None
-                }
-            }).collect()
-    } else {vec![]};
-    let mut current_file_list: Vec<_> = std::fs::read_dir(&file_path).unwrap()
-        .map(|e| e.unwrap()).collect();
-    current_file_list.sort_by(|a, b| a.file_name().partial_cmp(&b.file_name()).unwrap());
-    let selected_file = current_file_list
-        .get(state.list_state.selected().unwrap())
+    let left_paths: Vec<_> = file_state
+        .files
+        .iter()
+        .map(|e| ListItem::new(Span::from(Span::styled(e.clone(), Style::default()))))
+        .collect();
+    let selected_file = file_state
+        .files
+        .get(file_state.cycle.current_item)
         .unwrap();
-    let right_item_text = if let Ok(entry_type) = selected_file.file_type() {
-        if entry_type.is_dir() {
-            let item: Vec<String> = all_files!(selected_file.path());
-            Text::from(item.join("\n"))
-        } else if entry_type.is_file() {
-            let knowledge = Knowledge::from_file(selected_file.path());
-            Text::from(knowledge.text)
-        } else {
-            Text::from("error in reading files")
-        }
-    } else {Text::from("error in getting the file type!")};
+
+    let mut selected_file_path = file_state.base_path.clone();
+    selected_file_path.push(selected_file);
+    let right_item_text = if selected_file_path.is_dir() {
+        let item: Vec<String> = all_files!(selected_file_path);
+        Text::from(item.join("\n"))
+    } else if selected_file_path.is_file() {
+        let knowledge = Knowledge::from_file(selected_file_path);
+        Text::from(knowledge.text)
+    } else {
+        Text::from("error in reading files")
+    };
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .margin(2)
@@ -78,12 +69,16 @@ fn draw_files_view<T: Backend>(mut f: Frame<T>, config: &Config, state: &mut sta
         .style(Style::default().fg(Color::White))
         .title("knowledge-base!")
         .border_type(BorderType::Rounded);
-    let descriptions_widget = Paragraph::new(right_item_text).block(main_block.clone().title("text"));
-    let main_list = List::new(left_paths).block(main_block.clone())
-        .highlight_style(Style::default()
-            .bg(Color::Yellow)
-            .fg(Color::Black)
-            .add_modifier(Modifier::BOLD));
-    f.render_stateful_widget(main_list, chunks[0], &mut state.list_state);
+    let descriptions_widget =
+        Paragraph::new(right_item_text).block(main_block.clone().title("text"));
+    let main_list = List::new(left_paths)
+        .block(main_block.clone())
+        .highlight_style(
+            Style::default()
+                .bg(Color::Yellow)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        );
+    f.render_stateful_widget(main_list, chunks[0], list_state);
     f.render_widget(descriptions_widget, chunks[1])
 }

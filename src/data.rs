@@ -83,7 +83,7 @@ impl fmt::Display for Knowledge{
 
 pub struct Handler <'a> {
     pub data: Vec<Knowledge>,
-    config: &'a Config
+    pub config: &'a Config
 }
 
 impl <'a> Handler <'a>  {

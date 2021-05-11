@@ -1,3 +1,6 @@
+#[macro_use]
+mod util;
+
 use std::fs::read_to_string;
 use structopt::StructOpt;
 use crate::data::{Knowledge};
