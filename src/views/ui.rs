@@ -1,5 +1,5 @@
 use crate::data::{Handler, Knowledge};
-use crate::views::state::{FileState, ProgramState, ViewState};
+use crate::views::state::{ProgramState, ViewState};
 use crate::nav;
 use chrono::prelude::*;
 use crossterm::{
@@ -16,6 +16,7 @@ use tui::text::{Span, Text};
 use tui::widgets::Block;
 use tui::widgets::{BorderType, Borders, List, ListItem, ListState, Paragraph};
 use tui::Terminal;
+use crate::views::file_view;
 
 enum Event<I> {
     Input(I),
@@ -77,7 +78,7 @@ pub fn ui(h: Handler) {
     terminal.clear().expect("Error in clearing terminal");
     let mut knowledge_state = ListState::default();
     knowledge_state.select(Some(0));
-    let mut program_state = ProgramState::new(ViewState::FileView(FileState::new(h.config)),
+    let mut program_state = ProgramState::new(ViewState::FileView(file_view::FileState::new(h.config)),
                                               &mut knowledge_state);
     loop {
         terminal.draw(|rect| {
@@ -92,55 +93,7 @@ pub fn ui(h: Handler) {
                 }
                 program_state.update_state(&event);
             }
-            _ => {} /*
-                    Event::Input(event) => match event.code {
-                        KeyCode::Char('q') => {
-                            disable_raw_mode().expect("Error in disabling raw mode");
-                            terminal.show_cursor();
-                            break;
-                        }
-                        KeyCode::Down | KeyCode::Char('j') => {
-                            if let Some(selected) = knowledge_state.selected() {
-                                if selected >= display_list.len() -1 {
-                                    knowledge_state.select(Some(0));
-                                } else {
-                                    knowledge_state.select(Some(selected + 1));
-                                }
-                            }
-                        }
-                        KeyCode::Up | KeyCode::Char('k') => {
-                            if let Some(selected) = knowledge_state.selected() {
-                                if selected == 0 {
-                                    knowledge_state.select(Some(display_list.len()-1));
-                                } else {
-                                    knowledge_state.select(Some(selected - 1));
-                                }
-                            }
-                        }
-                        KeyCode::Enter | KeyCode::Char('l') => {
-                            hierarchy_state = match display_list.get(knowledge_state.selected().unwrap()) {
-                                Some(e) => {
-                                    match e {
-                                        RightItem::Knowledge(k) => {
-                                            hierarchy_state
-                                        }
-                                        RightItem::Parent(p) => {
-                                            Some(p.clone())
-                                        }
-                                    }
-                                }
-                                None => {
-                                    hierarchy_state
-                                }
-                            };
-                        }
-                        KeyCode::Char('h') => {
-                            hierarchy_state = None;
-                        }
-                        _ => {}
-                    }
-                    Event::Tick => {}
-                     */
+            _ => {}
         }
     }
 }
