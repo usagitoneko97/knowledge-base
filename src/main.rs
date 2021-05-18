@@ -1,7 +1,7 @@
 #[macro_use]
 mod util;
 
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 mod config;
 mod data;

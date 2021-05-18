@@ -46,7 +46,9 @@ pub fn ui(h: Handler) {
             nav::draw_views(rect, &mut program_state);
         }) {
             std::io::Result::Ok(()) => {}
-            std::io::Result::Err(_e) => {panic!("Error in writing into terminal!");}
+            std::io::Result::Err(_e) => {
+                panic!("Error in writing into terminal!");
+            }
         }
         match rx.recv().unwrap() {
             Event::Input(event) => {
@@ -54,7 +56,9 @@ pub fn ui(h: Handler) {
                     disable_raw_mode().expect("Error in disabling raw mode");
                     match terminal.show_cursor() {
                         std::io::Result::Ok(()) => {}
-                        std::io::Result::Err(_e) => {panic!("Error in showing cursor!");}
+                        std::io::Result::Err(_e) => {
+                            panic!("Error in showing cursor!");
+                        }
                     }
                     break;
                 }

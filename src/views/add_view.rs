@@ -28,7 +28,9 @@ pub fn handler(app: &mut App, event: &KeyEvent) {
             );
             match knowledge.write_to_file(app.base_path.clone(), "md") {
                 std::io::Result::Ok(()) => {}
-                std::io::Result::Err(_e) => {panic!("Error in writing file!");}
+                std::io::Result::Err(_e) => {
+                    panic!("Error in writing file!");
+                }
             }
             app.pop_state();
             app.refresh_directory();
