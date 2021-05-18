@@ -1,18 +1,36 @@
-use crate::state;
-use crossterm::event::{
-    KeyCode, KeyEvent
-};
+use crate::config::Config;
+use crate::data::Knowledge;
+use crate::util::BiCycle;
+use crate::views::state::{App, Tab};
+use crossterm::event::{KeyCode, KeyEvent};
 
-
-pub struct AddState {
-    pub title: String,
-    pub text: String,
-    pub file_name: String,
-}
-
-pub fn handler(program_state: &mut state::ProgramState, event: &KeyEvent) {
+pub fn handler(app: &mut App, event: &KeyEvent) {
     match event.code {
-        KeyCode::Down => {
+        KeyCode::Char(c) => {
+            app.get_current_input().insert(c);
+        }
+        KeyCode::Tab => {
+            app.input_current_tab.next();
+        }
+        KeyCode::Backspace => {
+            app.get_current_input().backspace();
+        }
+        KeyCode::Left => {
+            app.get_current_input().move_left();
+        }
+        KeyCode::Right => {
+            app.get_current_input().move_right();
+        }
+        KeyCode::Enter => {
+            let knowledge = Knowledge::new(
+                app.input_title.get_string(),
+                app.input_text.get_string(),
+                String::new(),
+                app.input_tags.get_string(),
+            );
+            knowledge.write_to_file(app.base_path.clone(), "md");
+            app.pop_state();
+            app.refresh_directory();
         }
         _ => {}
     }

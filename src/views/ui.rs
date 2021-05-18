@@ -1,5 +1,5 @@
 use crate::data::{Handler, Knowledge};
-use crate::views::state::{ProgramState, ViewState};
+use crate::views::state::{App, ViewState};
 use crate::nav;
 use chrono::prelude::*;
 use crossterm::{
@@ -76,10 +76,7 @@ pub fn ui(h: Handler) {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).expect("Error in creating new terminal");
     terminal.clear().expect("Error in clearing terminal");
-    let mut knowledge_state = ListState::default();
-    knowledge_state.select(Some(0));
-    let mut program_state = ProgramState::new(ViewState::FileView(file_view::FileState::new(h.config)),
-                                              &mut knowledge_state);
+    let mut program_state = App::default().set_file_view(h.config);
     loop {
         terminal.draw(|rect| {
            nav::draw_views(rect, &mut program_state);

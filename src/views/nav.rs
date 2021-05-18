@@ -10,16 +10,25 @@ use tui::text::{Span, Text};
 use tui::widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph};
 use tui::Frame;
 use crate::views::file_view;
+use crate::views::state::{App, FileMode, Tab};
+use tui::style::Color::Black;
 
 pub fn draw_views<T: Backend>(
     f: &mut Frame<T>,
-    program_state: &mut state::ProgramState,
+    app: &mut App,
 ) {
-    match program_state.view_state {
-        state::ViewState::FileView(ref mut file_view) => {
-            draw_files_view(f, file_view)
+    if let Some(state) = app.get_latest_state() {
+        match state {
+            state::ViewState::FileView => {
+                draw_files_view(f, app);
+            }
+            state::ViewState::AddView => {
+                draw_add_view(f, app);
+            }
+            _ => {}
         }
-        _ => {}
+    } else {
+        panic!("Don't have any state in the stack to draw!");
     }
 }
 
@@ -35,7 +44,7 @@ macro_rules! all_files {
 
 pub fn draw_files_view<T: Backend>(
     f: &mut Frame<T>,
-    file_state: &mut file_view::FileState
+    app: &mut App
 ) {
     // TODO: handle multiple data directories
     let main_block = Block::default()
@@ -43,19 +52,19 @@ pub fn draw_files_view<T: Backend>(
         .style(Style::default().fg(Color::White))
         .title("knowledge-base!")
         .border_type(BorderType::Rounded);
-    match file_state.mode {
-        file_view::FileMode::Dir => {
-            let left_paths: Vec<_> = file_state
+    match app.file_mode {
+        state::FileMode::Dir => {
+            let left_paths: Vec<_> = app
                 .files
                 .iter()
                 .map(|e| ListItem::new(Span::from(Span::styled(e.clone(), Style::default()))))
                 .collect();
-            let selected_file = file_state
+            let selected_file = app
                 .files
-                .get(file_state.cycle.current_item)
+                .get(app.file_cycle.current_item)
                 .unwrap();
 
-            let mut selected_file_path = file_state.base_path.clone();
+            let mut selected_file_path = app.base_path.clone();
             selected_file_path.push(selected_file);
             let right_item_text = if selected_file_path.is_dir() {
                 let item: Vec<String> = all_files!(selected_file_path);
@@ -82,18 +91,18 @@ pub fn draw_files_view<T: Backend>(
                         .add_modifier(Modifier::BOLD),
                 );
             let mut list_state = ListState::default();
-            list_state.select(Some(file_state.cycle.current_item));
+            list_state.select(Some(app.file_cycle.current_item));
             f.render_stateful_widget(main_list, chunks[0], &mut list_state);
             f.render_widget(descriptions_widget, chunks[1])
         }
-        file_view::FileMode::File => {
+        state::FileMode::File => {
             // create one view
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(2)
                 .constraints([Constraint::Percentage(10), Constraint::Percentage(90)].as_ref())
                 .split(f.size());
-            let knowledge = Knowledge::from_file(&file_state.base_path);
+            let knowledge = Knowledge::from_file(&app.base_path);
             let title_widget = Paragraph::new(Text::from(knowledge.title.as_ref()))
                 .block(main_block.clone().title("Title"));
             let content_widget = Paragraph::new(Text::from(knowledge.text))
@@ -102,4 +111,39 @@ pub fn draw_files_view<T: Backend>(
             f.render_widget(content_widget, chunks[1]);
         }
     }
+}
+pub fn draw_add_view<T: Backend>(
+    f: &mut Frame<T>,
+    app: &mut App
+) {
+    let default_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(2)
+        .constraints([Constraint::Percentage(10), Constraint::Percentage(10), Constraint::Percentage(80)].as_ref())
+        .split(f.size());
+    let mut title_block = default_block.clone().title("Title");
+    let mut tag_block = default_block.clone().title("Tag");
+    let mut text_block = default_block.clone().title("Text");
+    if let Some(current_tab) = app.input_tabs.get(app.input_current_tab.current_item) {
+        match current_tab{
+            Tab::Title => {title_block = title_block.border_style(Style::default().fg(Color::Cyan));}
+            Tab::Text => {text_block = text_block.border_style(Style::default().fg(Color::Cyan));}
+            Tab::Tags => {tag_block = tag_block.border_style(Style::default().fg(Color::Cyan));}
+        }
+    }
+    let title= Paragraph::new(app.input_title.get_string()).block(
+        title_block
+    );
+    let tag= Paragraph::new(app.input_tags.get_string()).block(
+        tag_block
+    );
+    let text = Paragraph::new(app.input_text.get_string()).block(
+        text_block
+    );
+    f.render_widget(title, chunks[0]);
+    f.render_widget(tag, chunks[1]);
+    f.render_widget(text, chunks[2]);
 }

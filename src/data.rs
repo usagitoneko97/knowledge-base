@@ -20,16 +20,16 @@ pub struct Knowledge {
 }
 
 impl Knowledge {
-    pub fn new (title: String, text: String, descriptions: String) -> Self {
-        Knowledge{
+    pub fn new(title: String, text: String, descriptions: String, tag: String) -> Self {
+        Knowledge {
             title,
-            tag: Vec::new(),
+            tag: vec![tag],
             text,
             descriptions,
         }
     }
 
-    pub fn from_file<P: Into<PathBuf>> (file: P) -> Self {
+    pub fn from_file<P: Into<PathBuf>>(file: P) -> Self {
         let f = file.into();
         let mut res = std::fs::read_to_string(f).unwrap();
         let mut title: String = String::new();
@@ -50,8 +50,9 @@ impl Knowledge {
                     .map(|e| e.trim().to_owned()).collect();
             }
         }
-        Knowledge{
-            title: title.to_string(), descriptions: descriptions.to_string(),
+        Knowledge {
+            title: title.to_string(),
+            descriptions: descriptions.to_string(),
             tag: tags,
             text: res,
         }
@@ -64,14 +65,20 @@ impl Knowledge {
         if !path.exists() {
             create_dir(&path).expect(format!("Failed to create directory: {:?}", path).as_str());
         }
-        let file: String = self.title.clone() + "." + &config.extension;
+        self.write_to_file(path, &config.extension)
+    }
+
+    pub fn write_to_file<T: Into<PathBuf>>(&self, parent_dir: T, ext: &str) -> std::io::Result<()> {
+        let mut path = parent_dir.into();
+        let file: String = self.title.clone() + "." + ext;
         path.push(file);
-        std::fs::write(&path, &format!("{}", self)).expect("Error in writing file");
+        std::fs::write(&path, &format!("{}", self))?;
         Ok(())
     }
+
 }
 
-impl fmt::Display for Knowledge{
+impl fmt::Display for Knowledge {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut result = String::new();
         result.push_str(&format!("# Title: {}\n", self.title));
@@ -81,16 +88,16 @@ impl fmt::Display for Knowledge{
     }
 }
 
-pub struct Handler <'a> {
+pub struct Handler<'a> {
     pub data: Vec<Knowledge>,
-    pub config: &'a Config
+    pub config: &'a Config,
 }
 
-impl <'a> Handler <'a>  {
-    pub fn new (config: &'a Config) -> Self {
+impl<'a> Handler<'a> {
+    pub fn new(config: &'a Config) -> Self {
         Handler {
             data: vec![],
-            config
+            config,
         }
     }
 
@@ -118,6 +125,5 @@ impl <'a> Handler <'a>  {
         }
         // println!("{:?}", mapping);
         mapping
-
     }
 }
