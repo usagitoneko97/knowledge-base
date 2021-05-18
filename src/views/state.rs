@@ -38,8 +38,10 @@ impl Input {
     }
 
     pub fn backspace(&mut self) {
-        self.input_idx -= 1;
-        self.input.remove(self.input_idx);
+        if self.input_idx > 0 {
+            self.input_idx -= 1;
+            self.input.remove(self.input_idx);
+        }
     }
 
     pub fn move_left(&mut self) {
