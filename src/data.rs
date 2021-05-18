@@ -1,14 +1,9 @@
 use crate::config::Config;
 use core::fmt;
 use glob::glob;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::Error;
-use std::fs::{create_dir, read_to_string};
-use std::hash::Hash;
-use std::io;
-use std::path::{Display, Path, PathBuf};
-use toml::ser::Error::KeyNotString;
+use std::fs::create_dir;
+use std::path::PathBuf;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Default)]
 pub struct Knowledge {
@@ -30,7 +25,7 @@ impl Knowledge {
 
     pub fn from_file<P: Into<PathBuf>>(file: P) -> Self {
         let f = file.into();
-        let mut res = std::fs::read_to_string(f).unwrap();
+        let res = std::fs::read_to_string(f).unwrap();
         let mut title: String = String::new();
         let mut descriptions = String::new();
         let mut tags: Vec<String> = vec![];

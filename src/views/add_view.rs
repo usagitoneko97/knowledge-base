@@ -1,7 +1,5 @@
-use crate::config::Config;
 use crate::data::Knowledge;
-use crate::util::BiCycle;
-use crate::views::app::{App, Tab};
+use crate::views::app::App;
 use crossterm::event::{KeyCode, KeyEvent};
 
 pub fn handler(app: &mut App, event: &KeyEvent) {
@@ -28,7 +26,10 @@ pub fn handler(app: &mut App, event: &KeyEvent) {
                 String::new(),
                 app.input_tags.get_string(),
             );
-            knowledge.write_to_file(app.base_path.clone(), "md");
+            match knowledge.write_to_file(app.base_path.clone(), "md") {
+                std::io::Result::Ok(()) => {}
+                std::io::Result::Err(_e) => {panic!("Error in writing file!");}
+            }
             app.pop_state();
             app.refresh_directory();
         }

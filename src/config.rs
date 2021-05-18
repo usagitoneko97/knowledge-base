@@ -1,6 +1,6 @@
 use serde_derive::Deserialize;
 use std::fs::read_to_string;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use toml::Value;
 
 #[derive(Deserialize)]

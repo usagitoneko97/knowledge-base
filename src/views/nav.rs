@@ -1,13 +1,8 @@
-use crate::config::Config;
 use crate::data::Knowledge;
-use crate::views::file_view;
 use crate::views::app;
-use crate::views::app::{App, FileMode, Tab};
-use std::fs::read_dir;
-use std::path::PathBuf;
+use crate::views::app::{App, Tab};
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
-use tui::style::Color::Black;
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Text};
 use tui::widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph};

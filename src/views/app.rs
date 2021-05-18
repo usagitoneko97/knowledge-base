@@ -2,12 +2,8 @@ use crate::add_view;
 use crate::config::Config;
 use crate::file_view;
 use crate::util::BiCycle;
-use crossterm::event::{KeyCode, KeyEvent};
-use std::error::Error;
-use std::iter::Cycle;
-use std::ops::Range;
+use crossterm::event::KeyEvent;
 use std::path::{Path, PathBuf};
-use tui::widgets::ListState;
 
 pub enum ViewState {
     FileView,
@@ -194,7 +190,7 @@ impl App {
                 self.files = files;
                 self.file_cycle = BiCycle::new(item_len);
             }
-            Err(e) => {
+            Err(_e) => {
                 self.files.clear();
                 self.file_mode = FileMode::File;
             }

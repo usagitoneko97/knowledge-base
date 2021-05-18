@@ -1,8 +1,5 @@
-use crate::config::Config;
-use crate::app;
 use crate::views::app::{App, ViewState};
 use crossterm::event::{KeyCode, KeyEvent};
-use std::path::{Path, PathBuf};
 
 pub fn handler(app: &mut App, event: &KeyEvent) {
     match event.code {
@@ -32,14 +29,14 @@ pub struct BiCycle {
 }
 
 impl BiCycle {
-    fn new(total_len: usize) -> Self {
+    pub fn new(total_len: usize) -> Self {
         BiCycle {
             total_len,
             current_item: 0,
         }
     }
 
-    fn next(&mut self) -> Option<usize> {
+    pub fn next(&mut self) -> Option<usize> {
         self.current_item = if self.current_item >= self.total_len - 1 {
             0
         } else {
@@ -48,7 +45,7 @@ impl BiCycle {
         Some(self.current_item)
     }
 
-    fn prev(&mut self) -> Option<usize> {
+    pub fn prev(&mut self) -> Option<usize> {
         self.current_item = if self.current_item == 0 {
             self.total_len - 1
         } else {
