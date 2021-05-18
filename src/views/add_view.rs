@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::data::Knowledge;
 use crate::util::BiCycle;
-use crate::views::state::{App, Tab};
+use crate::views::app::{App, Tab};
 use crossterm::event::{KeyCode, KeyEvent};
 
 pub fn handler(app: &mut App, event: &KeyEvent) {

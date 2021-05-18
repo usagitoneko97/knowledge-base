@@ -1,8 +1,8 @@
 use crate::config::Config;
 use crate::data::Knowledge;
 use crate::views::file_view;
-use crate::views::state;
-use crate::views::state::{App, FileMode, Tab};
+use crate::views::app;
+use crate::views::app::{App, FileMode, Tab};
 use std::fs::read_dir;
 use std::path::PathBuf;
 use tui::backend::Backend;
@@ -16,10 +16,10 @@ use tui::Frame;
 pub fn draw_views<T: Backend>(f: &mut Frame<T>, app: &mut App) {
     if let Some(state) = app.get_latest_state() {
         match state {
-            state::ViewState::FileView => {
+            app::ViewState::FileView => {
                 draw_files_view(f, app);
             }
-            state::ViewState::AddView => {
+            app::ViewState::AddView => {
                 draw_add_view(f, app);
             }
             _ => {}
@@ -47,7 +47,7 @@ pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &mut App) {
         .title("knowledge-base!")
         .border_type(BorderType::Rounded);
     match app.file_mode {
-        state::FileMode::Dir => {
+        app::FileMode::Dir => {
             let left_paths: Vec<_> = app
                 .files
                 .iter()
@@ -86,7 +86,7 @@ pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &mut App) {
             f.render_stateful_widget(main_list, chunks[0], &mut list_state);
             f.render_widget(descriptions_widget, chunks[1])
         }
-        state::FileMode::File => {
+        app::FileMode::File => {
             // create one view
             let chunks = Layout::default()
                 .direction(Direction::Vertical)

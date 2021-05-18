@@ -1,7 +1,7 @@
 use crate::data::{Handler, Knowledge};
 use crate::nav;
 use crate::views::file_view;
-use crate::views::state::{App, ViewState};
+use crate::views::app::{App, ViewState};
 use chrono::prelude::*;
 use crossterm::{
     event::{self, Event as CEvent, KeyCode},

@@ -1,6 +1,6 @@
 use crate::config::Config;
-use crate::state;
-use crate::views::state::{App, ViewState};
+use crate::app;
+use crate::views::app::{App, ViewState};
 use crossterm::event::{KeyCode, KeyEvent};
 use std::path::{Path, PathBuf};
 
