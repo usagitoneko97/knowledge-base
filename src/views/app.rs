@@ -19,8 +19,8 @@ pub enum Tab {
 
 #[derive(Default)]
 pub struct Input {
-    input: Vec<char>,
-    input_idx: usize,
+    pub input: Vec<char>,
+    pub input_idx: usize,
 }
 
 impl Input {
@@ -231,6 +231,22 @@ impl App {
                 Tab::Title => &mut self.input_title,
                 Tab::Text => &mut self.input_text,
                 Tab::Tags => &mut self.input_tags,
+            }
+        } else {
+            panic!("invalid tab selected!");
+        }
+    }
+
+    pub fn get_cursor_position(&self) -> (u16, u16){
+        if let Some(s) = self.input_tabs.get(self.input_current_tab.current_item) {
+            match s {
+                Tab::Title => {(3+self.input_title.input_idx as u16, 3)}
+                Tab::Tags => {
+                    (3+self.input_tags.input_idx as u16, 7)
+                }
+                Tab::Text => {
+                    (3+self.input_text.input_idx as u16, 11)
+                }
             }
         } else {
             panic!("invalid tab selected!");

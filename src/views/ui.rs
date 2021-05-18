@@ -1,6 +1,6 @@
 use crate::data::Handler;
 use crate::nav;
-use crate::views::app::App;
+use crate::views::app::{App, ViewState};
 use crossterm::{
     event::{self, Event as CEvent, KeyCode},
     terminal::{disable_raw_mode, enable_raw_mode},
@@ -48,6 +48,17 @@ pub fn ui(h: Handler) {
             std::io::Result::Ok(()) => {}
             std::io::Result::Err(_e) => {
                 panic!("Error in writing into terminal!");
+            }
+        }
+
+        match program_state.get_latest_state() {
+            Some(ViewState::AddView) => {
+                let (x, y) = program_state.get_cursor_position();
+                terminal.show_cursor().unwrap();
+                terminal.set_cursor(x, y).expect("Error in setting cursor");
+            }
+            _ => {
+                terminal.hide_cursor().unwrap();
             }
         }
         match rx.recv().unwrap() {
