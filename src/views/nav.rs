@@ -1,22 +1,19 @@
 use crate::config::Config;
 use crate::data::Knowledge;
+use crate::views::file_view;
 use crate::views::state;
+use crate::views::state::{App, FileMode, Tab};
 use std::fs::read_dir;
 use std::path::PathBuf;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout};
+use tui::style::Color::Black;
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Text};
 use tui::widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph};
 use tui::Frame;
-use crate::views::file_view;
-use crate::views::state::{App, FileMode, Tab};
-use tui::style::Color::Black;
 
-pub fn draw_views<T: Backend>(
-    f: &mut Frame<T>,
-    app: &mut App,
-) {
+pub fn draw_views<T: Backend>(f: &mut Frame<T>, app: &mut App) {
     if let Some(state) = app.get_latest_state() {
         match state {
             state::ViewState::FileView => {
@@ -42,10 +39,7 @@ macro_rules! all_files {
     }};
 }
 
-pub fn draw_files_view<T: Backend>(
-    f: &mut Frame<T>,
-    app: &mut App
-) {
+pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &mut App) {
     // TODO: handle multiple data directories
     let main_block = Block::default()
         .borders(Borders::ALL)
@@ -59,10 +53,7 @@ pub fn draw_files_view<T: Backend>(
                 .iter()
                 .map(|e| ListItem::new(Span::from(Span::styled(e.clone(), Style::default()))))
                 .collect();
-            let selected_file = app
-                .files
-                .get(app.file_cycle.current_item)
-                .unwrap();
+            let selected_file = app.files.get(app.file_cycle.current_item).unwrap();
 
             let mut selected_file_path = app.base_path.clone();
             selected_file_path.push(selected_file);
@@ -112,37 +103,41 @@ pub fn draw_files_view<T: Backend>(
         }
     }
 }
-pub fn draw_add_view<T: Backend>(
-    f: &mut Frame<T>,
-    app: &mut App
-) {
+pub fn draw_add_view<T: Backend>(f: &mut Frame<T>, app: &mut App) {
     let default_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(2)
-        .constraints([Constraint::Percentage(10), Constraint::Percentage(10), Constraint::Percentage(80)].as_ref())
+        .constraints(
+            [
+                Constraint::Percentage(10),
+                Constraint::Percentage(10),
+                Constraint::Percentage(80),
+            ]
+            .as_ref(),
+        )
         .split(f.size());
     let mut title_block = default_block.clone().title("Title");
     let mut tag_block = default_block.clone().title("Tag");
     let mut text_block = default_block.clone().title("Text");
     if let Some(current_tab) = app.input_tabs.get(app.input_current_tab.current_item) {
-        match current_tab{
-            Tab::Title => {title_block = title_block.border_style(Style::default().fg(Color::Cyan));}
-            Tab::Text => {text_block = text_block.border_style(Style::default().fg(Color::Cyan));}
-            Tab::Tags => {tag_block = tag_block.border_style(Style::default().fg(Color::Cyan));}
+        match current_tab {
+            Tab::Title => {
+                title_block = title_block.border_style(Style::default().fg(Color::Cyan));
+            }
+            Tab::Text => {
+                text_block = text_block.border_style(Style::default().fg(Color::Cyan));
+            }
+            Tab::Tags => {
+                tag_block = tag_block.border_style(Style::default().fg(Color::Cyan));
+            }
         }
     }
-    let title= Paragraph::new(app.input_title.get_string()).block(
-        title_block
-    );
-    let tag= Paragraph::new(app.input_tags.get_string()).block(
-        tag_block
-    );
-    let text = Paragraph::new(app.input_text.get_string()).block(
-        text_block
-    );
+    let title = Paragraph::new(app.input_title.get_string()).block(title_block);
+    let tag = Paragraph::new(app.input_tags.get_string()).block(tag_block);
+    let text = Paragraph::new(app.input_text.get_string()).block(text_block);
     f.render_widget(title, chunks[0]);
     f.render_widget(tag, chunks[1]);
     f.render_widget(text, chunks[2]);

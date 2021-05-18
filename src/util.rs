@@ -30,4 +30,3 @@ impl BiCycle {
         Some(self.current_item)
     }
 }
-

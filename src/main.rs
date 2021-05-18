@@ -1,15 +1,15 @@
 #[macro_use]
 mod util;
 
-use std::fs::read_to_string;
-use structopt::StructOpt;
-use crate::data::{Knowledge};
-use std::path::{PathBuf, Path};
-use std::str::FromStr;
+use crate::data::Knowledge;
 use crossterm::event::KeyCode::Enter;
+use std::fs::read_to_string;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
+use structopt::StructOpt;
 
-mod data;
 mod config;
+mod data;
 mod views;
 
 pub use crate::views::*;
@@ -21,7 +21,7 @@ struct Kb {
     #[structopt(short, long, parse(from_os_str), default_value=CONFIG_FILE)]
     config: PathBuf,
     #[structopt(subcommand)]
-    cmd: KbSub
+    cmd: KbSub,
 }
 
 #[derive(StructOpt)]
@@ -37,20 +37,19 @@ enum KbSub {
 
         #[structopt(short, long)]
         descriptions: String,
-    }
+    },
 }
 
-fn init <T: Into<PathBuf>> (config_file: T) -> std::io::Result<(config::Config)> {
+fn init<T: Into<PathBuf>>(config_file: T) -> std::io::Result<(config::Config)> {
     // init default config location
     let config;
     let config_file_ = config_file.into();
-    config = config::Config::new(&config_file_)
-        .expect("Error in reading config file");
+    config = config::Config::new(&config_file_).expect("Error in reading config file");
     Ok(config)
 }
 
 enum C<T> {
-    Field(T)
+    Field(T),
 }
 
 fn main() {
@@ -59,4 +58,3 @@ fn main() {
     d.read_all_files();
     ui::ui(d);
 }
-

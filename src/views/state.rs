@@ -1,14 +1,13 @@
+use crate::add_view;
 use crate::config::Config;
 use crate::file_view;
-use crate::add_view;
+use crate::util::BiCycle;
 use crossterm::event::{KeyCode, KeyEvent};
+use std::error::Error;
 use std::iter::Cycle;
 use std::ops::Range;
+use std::path::{Path, PathBuf};
 use tui::widgets::ListState;
-use std::path::{PathBuf, Path};
-use std::error::Error;
-use crate::util::BiCycle;
-
 
 pub enum ViewState {
     FileView,
@@ -19,7 +18,7 @@ pub enum ViewState {
 pub enum Tab {
     Title,
     Tags,
-    Text
+    Text,
 }
 
 #[derive(Default)]
@@ -57,7 +56,7 @@ impl Input {
 
 pub enum FileMode {
     Dir,
-    File
+    File,
 }
 
 pub struct App {
@@ -107,7 +106,13 @@ impl App {
                 self.file_mode = FileMode::Dir
             }
             Err(_) => {
-                panic!("{}", format!("Data directories specified in config: {} is not a directory!", file_directory));
+                panic!(
+                    "{}",
+                    format!(
+                        "Data directories specified in config: {} is not a directory!",
+                        file_directory
+                    )
+                );
             }
         }
         self
@@ -139,8 +144,7 @@ impl App {
                 ViewState::AddView => {
                     add_view::handler(self, event);
                 }
-                ViewState::TagView => {
-                }
+                ViewState::TagView => {}
             }
         } else {
         }
@@ -195,12 +199,9 @@ impl App {
         }
     }
 
-    pub fn enter_directory(&mut self){
+    pub fn enter_directory(&mut self) {
         // enter directory specify by `self.cycle.current_item`
-        let selected_file = self
-            .files
-            .get(self.file_cycle.current_item)
-            .unwrap();
+        let selected_file = self.files.get(self.file_cycle.current_item).unwrap();
         self.base_path.push(selected_file);
         self.refresh_directory();
     }
@@ -215,7 +216,13 @@ impl App {
                 self.file_mode = FileMode::Dir;
             }
             Err(e) => {
-                panic!("{}", format!("Getting file list from dir: {:?} failed with {:?}", self.base_path, e))
+                panic!(
+                    "{}",
+                    format!(
+                        "Getting file list from dir: {:?} failed with {:?}",
+                        self.base_path, e
+                    )
+                )
             }
         }
     }
@@ -223,20 +230,12 @@ impl App {
     pub fn get_current_input(&mut self) -> &mut Input {
         if let Some(s) = self.input_tabs.get(self.input_current_tab.current_item) {
             match s {
-                Tab::Title => {
-                    &mut self.input_title
-                }
-                Tab::Text => {
-                    &mut self.input_text
-                }
-                Tab::Tags => {
-                    &mut self.input_tags
-                }
+                Tab::Title => &mut self.input_title,
+                Tab::Text => &mut self.input_text,
+                Tab::Tags => &mut self.input_tags,
             }
         } else {
             panic!("invalid tab selected!");
         }
     }
-    }
-
-
+}

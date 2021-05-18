@@ -1,17 +1,14 @@
-use crate::state;
-use crossterm::event::{
-    KeyCode, KeyEvent
-};
-use std::path::{PathBuf, Path};
 use crate::config::Config;
+use crate::state;
 use crate::views::state::{App, ViewState};
-
+use crossterm::event::{KeyCode, KeyEvent};
+use std::path::{Path, PathBuf};
 
 pub fn handler(app: &mut App, event: &KeyEvent) {
     match event.code {
-        KeyCode::Down | KeyCode::Char('j') =>  {
+        KeyCode::Down | KeyCode::Char('j') => {
             app.file_cycle.next();
-        },
+        }
         KeyCode::Up | KeyCode::Char('k') => {
             app.file_cycle.prev();
         }
@@ -60,4 +57,3 @@ impl BiCycle {
         Some(self.current_item)
     }
 }
-

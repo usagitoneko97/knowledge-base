@@ -1,15 +1,14 @@
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::path::{Path, PathBuf, Display};
-use std::fs::{read_to_string, create_dir};
-use std::fmt::Error;
-use std::io;
-use serde::{Deserialize, Serialize};
-use core::fmt;
 use crate::config::Config;
-use toml::ser::Error::KeyNotString;
+use core::fmt;
 use glob::glob;
-
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt::Error;
+use std::fs::{create_dir, read_to_string};
+use std::hash::Hash;
+use std::io;
+use std::path::{Display, Path, PathBuf};
+use toml::ser::Error::KeyNotString;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Default)]
 pub struct Knowledge {
@@ -46,8 +45,7 @@ impl Knowledge {
                 continue;
             } else if line.contains("# Tags: ") {
                 let t = line.replace("# Tags:", "");
-                tags = t.split(",")
-                    .map(|e| e.trim().to_owned()).collect();
+                tags = t.split(",").map(|e| e.trim().to_owned()).collect();
             }
         }
         Knowledge {
@@ -59,7 +57,10 @@ impl Knowledge {
     }
 
     pub fn write(&self, config: &Config) -> std::io::Result<()> {
-        let parent = &config.data_directories.get(0).expect("Must contain 1 data directories");
+        let parent = &config
+            .data_directories
+            .get(0)
+            .expect("Must contain 1 data directories");
         let mut path = PathBuf::new();
         path.push(parent);
         if !path.exists() {
@@ -75,7 +76,6 @@ impl Knowledge {
         std::fs::write(&path, &format!("{}", self))?;
         Ok(())
     }
-
 }
 
 impl fmt::Display for Knowledge {

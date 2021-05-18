@@ -1,6 +1,7 @@
 use crate::data::{Handler, Knowledge};
-use crate::views::state::{App, ViewState};
 use crate::nav;
+use crate::views::file_view;
+use crate::views::state::{App, ViewState};
 use chrono::prelude::*;
 use crossterm::{
     event::{self, Event as CEvent, KeyCode},
@@ -16,7 +17,6 @@ use tui::text::{Span, Text};
 use tui::widgets::Block;
 use tui::widgets::{BorderType, Borders, List, ListItem, ListState, Paragraph};
 use tui::Terminal;
-use crate::views::file_view;
 
 enum Event<I> {
     Input(I),
@@ -79,7 +79,7 @@ pub fn ui(h: Handler) {
     let mut program_state = App::default().set_file_view(h.config);
     loop {
         terminal.draw(|rect| {
-           nav::draw_views(rect, &mut program_state);
+            nav::draw_views(rect, &mut program_state);
         });
         match rx.recv().unwrap() {
             Event::Input(event) => {
