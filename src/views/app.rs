@@ -5,6 +5,7 @@ use crate::file_view;
 use crate::key::Key;
 use crate::util::BiCycle;
 use std::path::{Path, PathBuf};
+use std::fs::{remove_file, remove_dir_all};
 
 pub enum ViewState {
     FileView,
@@ -401,6 +402,22 @@ impl App {
                     )
                 )
             }
+        }
+    }
+
+    pub fn get_current_selected_entry(&self) -> PathBuf {
+        let selected_file = self.files.get(self.file_cycle.current_item).unwrap();
+        let mut dir_to_remove = self.base_path.clone();
+        dir_to_remove.push(selected_file);
+        dir_to_remove
+    }
+
+    pub fn remove_directory(&mut self) {
+        let entry = self.get_current_selected_entry();
+        if entry.is_dir() {
+            remove_dir_all(entry).expect("Error in removing this directory!");
+        } else if entry.is_file() {
+            remove_file(entry).expect("Error in removing this file");
         }
     }
 

@@ -19,6 +19,18 @@ pub fn handler(app: &mut App, event: &Key) {
             app.set_add_view_ref();
             app.push_state(ViewState::AddView);
         }
+        Key::Char('D') => {
+            fn action(app: &mut App) {
+                app.remove_directory();
+            }
+            let entry = app.get_current_selected_entry();
+            app.push_state(ViewState::DialogView);
+            app.confirm_action = Some(action);
+            app.confirm_text = format!("confirm deleting: {}?", entry.file_name().and_then(|name| name.to_str()).unwrap_or("Invalid_file_name"));
+            // default it to True so we don't need to use arrow key
+            app.confirm = false;
+            app.previous_view = ViewState::FileView;
+        }
         _ => {}
     }
 }
