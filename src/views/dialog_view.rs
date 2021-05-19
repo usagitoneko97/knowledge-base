@@ -3,7 +3,7 @@ use crate::views::app::App;
 
 pub fn handler(app: &mut App, event: &Key) {
     match event {
-        Key::Left | Key::Right => {
+        Key::Left | Key::Right | Key::Char('h') | Key::Char('l') => {
             app.confirm = !app.confirm;
         }
         Key::Enter => {
