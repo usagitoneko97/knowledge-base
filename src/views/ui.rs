@@ -1,5 +1,5 @@
 use crate::data::Handler;
-use crate::key::Key;
+use crate::key::{CtrlKey, Key};
 use crate::nav;
 use crate::views::app::{App, ViewState};
 use crossterm::{
@@ -65,7 +65,7 @@ pub fn ui(h: Handler) {
         }
         match rx.recv().unwrap() {
             Event::Input(event) => {
-                if let Key::Ctrl('q') = event {
+                if let Key::Ctrl(CtrlKey::Char('q')) = event {
                     disable_raw_mode().expect("Error in disabling raw mode");
                     match terminal.show_cursor() {
                         std::io::Result::Ok(()) => {}

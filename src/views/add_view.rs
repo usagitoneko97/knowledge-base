@@ -1,5 +1,5 @@
 use crate::data::Knowledge;
-use crate::key::Key;
+use crate::key::{CtrlKey, Key};
 use crate::views::app::App;
 use crossterm::event::{KeyCode, KeyEvent};
 
@@ -41,7 +41,13 @@ pub fn handler(app: &mut App, event: &Key) {
         Key::Delete => {
             app.get_current_input().delete();
         }
-        Key::Ctrl('g') => {
+        Key::Ctrl(CtrlKey::Home) => {
+            app.get_current_input().top_beginning_of_line();
+        }
+        Key::Ctrl(CtrlKey::End) => {
+            app.get_current_input().bottom_end_of_line();
+        }
+        Key::Ctrl(CtrlKey::Char('g')) => {
             let knowledge = Knowledge::new(
                 app.input_title.get_string(),
                 app.input_text.get_string(),

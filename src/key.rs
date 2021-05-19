@@ -1,3 +1,4 @@
+use crate::key::Key::Ctrl;
 use crossterm::event;
 use std::fmt;
 
@@ -64,9 +65,47 @@ pub enum Key {
     /// F12 key
     F12,
     Char(char),
-    Ctrl(char),
+    Ctrl(CtrlKey),
     Alt(char),
     Unknown,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+pub enum CtrlKey {
+    Enter,
+    /// Tabulation key
+    Tab,
+    /// BackTabulation Key
+    BackTab,
+    /// Backspace key
+    Backspace,
+    /// Escape key
+    Esc,
+
+    /// Left arrow
+    Left,
+    /// Right arrow
+    Right,
+    /// Up arrow
+    Up,
+    /// Down arrow
+    Down,
+
+    /// Insert key
+    Ins,
+    /// Delete key
+    Delete,
+    /// Home key
+    Home,
+    /// End key
+    End,
+    /// Page Up key
+    PageUp,
+    /// Page Down key
+    PageDown,
+
+    /// any character
+    Char(char),
 }
 
 impl Key {
@@ -101,10 +140,9 @@ impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Key::Alt(' ') => write!(f, "<Alt+Space>"),
-            Key::Ctrl(' ') => write!(f, "<Ctrl+Space>"),
             Key::Char(' ') => write!(f, "<Space>"),
             Key::Alt(c) => write!(f, "<Alt+{}>", c),
-            Key::Ctrl(c) => write!(f, "<Ctrl+{}>", c),
+            Key::Ctrl(CtrlKey::Char(c)) => write!(f, "<Ctrl+{}>", c),
             Key::Char(c) => write!(f, "{}", c),
             Key::Left | Key::Right | Key::Up | Key::Down => write!(f, "<{:?} Arrow Key>", self),
             Key::Enter
@@ -125,6 +163,46 @@ impl fmt::Display for Key {
 impl From<event::KeyEvent> for Key {
     fn from(key_event: event::KeyEvent) -> Self {
         match key_event {
+            event::KeyEvent {
+                code: event::KeyCode::Char(c),
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Char(c)),
+            event::KeyEvent {
+                code: event::KeyCode::Enter,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Enter),
+            event::KeyEvent {
+                code: event::KeyCode::Delete,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Delete),
+            event::KeyEvent {
+                code: event::KeyCode::Home,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Home),
+            event::KeyEvent {
+                code: event::KeyCode::End,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::End),
+            event::KeyEvent {
+                code: event::KeyCode::Backspace,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Backspace),
+            event::KeyEvent {
+                code: event::KeyCode::Left,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Left),
+            event::KeyEvent {
+                code: event::KeyCode::Right,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Right),
+            event::KeyEvent {
+                code: event::KeyCode::Up,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Up),
+            event::KeyEvent {
+                code: event::KeyCode::Down,
+                modifiers: event::KeyModifiers::CONTROL,
+            } => Key::Ctrl(CtrlKey::Down),
             event::KeyEvent {
                 code: event::KeyCode::Esc,
                 ..
@@ -195,10 +273,6 @@ impl From<event::KeyEvent> for Key {
                 code: event::KeyCode::Char(c),
                 modifiers: event::KeyModifiers::ALT,
             } => Key::Alt(c),
-            event::KeyEvent {
-                code: event::KeyCode::Char(c),
-                modifiers: event::KeyModifiers::CONTROL,
-            } => Key::Ctrl(c),
 
             event::KeyEvent {
                 code: event::KeyCode::Char(c),

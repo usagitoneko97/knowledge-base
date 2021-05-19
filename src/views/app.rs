@@ -156,7 +156,7 @@ impl Input {
     }
 
     pub fn bottom_end_of_line(&mut self) {
-        self.vertical_idx = self.input.len();
+        self.vertical_idx = self.input.len() - 1;
         if let Some(s) = self.input.last() {
             self.horizontal_idx = s.len();
         }
