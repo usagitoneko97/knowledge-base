@@ -1,16 +1,16 @@
 use crate::add_view;
 use crate::config::Config;
+use crate::dialog_view;
 use crate::file_view;
 use crate::key::Key;
 use crate::util::BiCycle;
-use crossterm::event::KeyEvent;
 use std::path::{Path, PathBuf};
-use std::thread::current;
 
 pub enum ViewState {
     FileView,
     AddView,
     TagView,
+    DialogView,
 }
 
 pub enum Tab {
@@ -238,6 +238,11 @@ pub struct App {
     pub base_path: PathBuf,
     pub file_cycle: BiCycle,
     pub file_mode: FileMode,
+
+    pub confirm: bool,
+    pub confirm_text: String,
+    pub confirm_action: Option<fn(&mut App)>,
+    pub previous_view: ViewState,
 }
 
 impl Default for App {
@@ -255,6 +260,10 @@ impl Default for App {
             files: vec![],
             base_path: PathBuf::default(),
             file_cycle: BiCycle::default(),
+            confirm: false,
+            confirm_text: String::default(),
+            confirm_action: None,
+            previous_view: ViewState::AddView,
         }
     }
 }
@@ -309,6 +318,9 @@ impl App {
                 ViewState::AddView => {
                     add_view::handler(self, event);
                 }
+                ViewState::DialogView => {
+                    dialog_view::handler(self, event);
+                }
                 ViewState::TagView => {}
             }
         } else {
@@ -327,7 +339,7 @@ impl App {
         self.navigation_stack.last_mut()
     }
 
-    pub fn get_latest_state(&mut self) -> Option<&ViewState> {
+    pub fn get_latest_state(&self) -> Option<&ViewState> {
         self.navigation_stack.last()
     }
 

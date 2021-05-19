@@ -1,7 +1,6 @@
 use crate::data::Knowledge;
 use crate::key::{CtrlKey, Key};
-use crate::views::app::App;
-use crossterm::event::{KeyCode, KeyEvent};
+use crate::views::app::{App, ViewState};
 
 pub fn handler(app: &mut App, event: &Key) {
     match event {
@@ -60,20 +59,36 @@ pub fn handler(app: &mut App, event: &Key) {
             app.get_current_input().delete_word();
         }
         Key::Ctrl(CtrlKey::Char('g')) => {
-            let knowledge = Knowledge::new(
-                app.input_title.get_string(),
-                app.input_text.get_string(),
-                String::new(),
-                app.input_tags.get_string(),
-            );
-            match knowledge.write_to_file(app.base_path.clone(), "md") {
-                std::io::Result::Ok(()) => {}
-                std::io::Result::Err(_e) => {
-                    panic!("Error in writing file!");
+            fn action(app: &mut App) {
+                let knowledge = Knowledge::new(
+                    app.input_title.get_string(),
+                    app.input_text.get_string(),
+                    String::new(),
+                    app.input_tags.get_string(),
+                );
+                match knowledge.write_to_file(app.base_path.clone(), "md") {
+                    std::io::Result::Ok(()) => {}
+                    std::io::Result::Err(_e) => {
+                        panic!("Error in writing file!");
+                    }
                 }
+                app.pop_state();
             }
-            app.pop_state();
-            app.refresh_directory();
+            app.push_state(ViewState::DialogView);
+            app.confirm_action = Some(action);
+            app.confirm_text = format!("Confirm writing file: {}?", app.input_title.get_string());
+            // default it to True so we don't need to use arrow key
+            app.confirm = true;
+        }
+        Key::Esc => {
+            fn action(app: &mut App) {
+                app.set_add_view_ref();
+                app.pop_state();
+            }
+            app.push_state(ViewState::DialogView);
+            app.confirm_action = Some(action);
+            app.confirm_text = format!("Confirm Quiting?");
+            app.confirm = false;
         }
         _ => {}
     }

@@ -1,26 +1,40 @@
 use crate::data::Knowledge;
 use crate::views::app;
-use crate::views::app::{App, Tab};
+use crate::views::app::{App, Tab, ViewState};
 use tui::backend::Backend;
-use tui::layout::{Constraint, Direction, Layout};
+use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Text};
-use tui::widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph};
+use tui::text::{Span, Spans, Text};
+use tui::widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap};
 use tui::Frame;
 
-pub fn draw_views<T: Backend>(f: &mut Frame<T>, app: &mut App) {
+pub fn draw_views<T: Backend>(f: &mut Frame<T>, app: &App) {
     if let Some(state) = app.get_latest_state() {
         match state {
-            app::ViewState::FileView => {
-                draw_files_view(f, app);
+            app::ViewState::DialogView => {
+                // draw twice because we want to have nice overlay of confirm dialog
+                _draw_views(f, &app.previous_view, app);
+                _draw_views(f, state, app);
             }
-            app::ViewState::AddView => {
-                draw_add_view(f, app);
+            app::ViewState::FileView | app::ViewState::AddView | app::ViewState::TagView => {
+                _draw_views(f, state, app);
             }
-            _ => {}
         }
-    } else {
-        panic!("Don't have any state in the stack to draw!");
+    }
+}
+
+fn _draw_views<T: Backend>(f: &mut Frame<T>, view_state: &ViewState, app: &App) {
+    match view_state {
+        app::ViewState::FileView => {
+            draw_files_view(f, app);
+        }
+        app::ViewState::AddView => {
+            draw_add_view(f, app);
+        }
+        app::ViewState::DialogView => {
+            draw_dialog(f, app);
+        }
+        _ => {}
     }
 }
 
@@ -34,7 +48,7 @@ macro_rules! all_files {
     }};
 }
 
-pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &mut App) {
+pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &App) {
     // TODO: handle multiple data directories
     let main_block = Block::default()
         .borders(Borders::ALL)
@@ -98,7 +112,8 @@ pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &mut App) {
         }
     }
 }
-pub fn draw_add_view<T: Backend>(f: &mut Frame<T>, app: &mut App) {
+
+pub fn draw_add_view<T: Backend>(f: &mut Frame<T>, app: &App) {
     let default_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
@@ -136,4 +151,60 @@ pub fn draw_add_view<T: Backend>(f: &mut Frame<T>, app: &mut App) {
     f.render_widget(title, chunks[0]);
     f.render_widget(tag, chunks[1]);
     f.render_widget(text, chunks[2]);
+}
+
+pub fn draw_dialog<T: Backend>(f: &mut Frame<T>, app: &App) {
+    let bounds = f.size();
+    let width = std::cmp::min(bounds.width - 2, 45);
+    let height = 8;
+    let left = (bounds.width - width) / 2;
+    let top = bounds.height / 4;
+
+    let rect = Rect::new(left, top, width, height);
+    f.render_widget(Clear, rect);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Cyan));
+    f.render_widget(block, rect);
+    let vchunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(2)
+        .constraints([Constraint::Min(3), Constraint::Length(3)].as_ref())
+        .split(rect);
+    let text = vec![Spans::from(Span::raw(app.confirm_text.clone()))];
+
+    let text = Paragraph::new(text)
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    f.render_widget(text, vchunks[0]);
+
+    let hchunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .horizontal_margin(3)
+        .constraints([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)].as_ref())
+        .split(vchunks[1]);
+
+    let ok_text = Span::raw("Ok");
+    let ok = Paragraph::new(ok_text)
+        .style(Style::default().fg(if app.confirm {
+            Color::Cyan
+        } else {
+            Color::Black
+        }))
+        .alignment(Alignment::Center);
+
+    f.render_widget(ok, hchunks[0]);
+
+    let cancel_text = Span::raw("Cancel");
+    let cancel = Paragraph::new(cancel_text)
+        .style(Style::default().fg(if app.confirm {
+            Color::Black
+        } else {
+            Color::Cyan
+        }))
+        .alignment(Alignment::Center);
+
+    f.render_widget(cancel, hchunks[1]);
 }

@@ -1,4 +1,3 @@
-use crate::key::Key::Ctrl;
 use crossterm::event;
 use std::fmt;
 

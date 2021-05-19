@@ -3,7 +3,7 @@ use crate::key::{CtrlKey, Key};
 use crate::nav;
 use crate::views::app::{App, ViewState};
 use crossterm::{
-    event::{self, Event as CEvent, KeyCode},
+    event::{self, Event as CEvent},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use std::time::{Duration, Instant};
