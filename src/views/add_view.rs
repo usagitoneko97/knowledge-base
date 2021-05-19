@@ -1,7 +1,7 @@
 use crate::data::Knowledge;
+use crate::key::Key;
 use crate::views::app::App;
 use crossterm::event::{KeyCode, KeyEvent};
-use crate::key::Key;
 
 pub fn handler(app: &mut App, event: &Key) {
     match event {
@@ -23,8 +23,23 @@ pub fn handler(app: &mut App, event: &Key) {
         Key::Right => {
             app.get_current_input().move_right();
         }
+        Key::Up => {
+            app.get_current_input().move_up();
+        }
+        Key::Down => {
+            app.get_current_input().move_down();
+        }
         Key::Enter => {
             app.get_current_input().new_line();
+        }
+        Key::Home => {
+            app.get_current_input().beginning_of_line();
+        }
+        Key::End => {
+            app.get_current_input().end_of_line();
+        }
+        Key::Delete => {
+            app.get_current_input().delete();
         }
         Key::Ctrl('g') => {
             let knowledge = Knowledge::new(

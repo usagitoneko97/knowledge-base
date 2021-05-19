@@ -1,10 +1,11 @@
 use crate::add_view;
 use crate::config::Config;
 use crate::file_view;
+use crate::key::Key;
 use crate::util::BiCycle;
 use crossterm::event::KeyEvent;
 use std::path::{Path, PathBuf};
-use crate::key::Key;
+use std::thread::current;
 
 pub enum ViewState {
     FileView,
@@ -29,7 +30,7 @@ impl Default for Input {
         Self {
             input: vec![vec![]],
             horizontal_idx: 0,
-            vertical_idx: 0
+            vertical_idx: 0,
         }
     }
 }
@@ -43,24 +44,41 @@ impl Input {
     }
 
     pub fn get_string(&self) -> String {
-        self.input.iter().map(|e| {
-            e.iter().collect::<String>()
-        }).collect::<Vec<_>>().join("\n")
+        self.input
+            .iter()
+            .map(|e| e.iter().collect::<String>())
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     pub fn backspace(&mut self) {
         if self.horizontal_idx > 0 {
             self.horizontal_idx -= 1;
-            self.input.get_mut(self.vertical_idx).unwrap().remove(self.horizontal_idx);
+            self.input
+                .get_mut(self.vertical_idx)
+                .unwrap()
+                .remove(self.horizontal_idx);
         } else {
             if self.vertical_idx > 0 {
-                let previous_row = self.input.get(self.vertical_idx).expect("Error in vertical index!").clone();
+                let previous_row = self
+                    .input
+                    .get(self.vertical_idx)
+                    .expect("Error in vertical index!")
+                    .clone();
                 self.input.remove(self.vertical_idx);
                 self.vertical_idx -= 1;
                 if let Some(current_row) = self.input.get_mut(self.vertical_idx) {
                     self.horizontal_idx = current_row.len();
                     current_row.extend(previous_row);
                 }
+            }
+        }
+    }
+
+    pub fn delete(&mut self) {
+        if let Some(current_row) = self.input.get_mut(self.vertical_idx) {
+            if current_row.len() >= self.horizontal_idx + 1 {
+                current_row.remove(self.horizontal_idx);
             }
         }
     }
@@ -79,12 +97,34 @@ impl Input {
     pub fn move_right(&mut self) {
         if let Some(current_row) = self.input.get(self.vertical_idx) {
             if self.horizontal_idx >= current_row.len() {
-                if (self.vertical_idx +  1) < self.input.len() {
+                if (self.vertical_idx + 1) < self.input.len() {
                     self.vertical_idx += 1;
                     self.horizontal_idx = 0;
                 }
             } else {
                 self.horizontal_idx += 1;
+            }
+        }
+    }
+
+    pub fn move_up(&mut self) {
+        if self.vertical_idx > 0 {
+            self.vertical_idx -= 1;
+            self.readjust_horizontal_line();
+        }
+    }
+
+    pub fn move_down(&mut self) {
+        if self.vertical_idx + 1 < self.input.len() {
+            self.vertical_idx += 1;
+            self.readjust_horizontal_line();
+        }
+    }
+
+    fn readjust_horizontal_line(&mut self) {
+        if let Some(current_row) = self.input.get_mut(self.vertical_idx) {
+            if self.horizontal_idx + 1 > current_row.len() {
+                self.horizontal_idx = current_row.len();
             }
         }
     }
@@ -95,9 +135,31 @@ impl Input {
         } else {
             vec![]
         };
-        self.input.insert(self.vertical_idx+1, remaining);
+        self.input.insert(self.vertical_idx + 1, remaining);
         self.vertical_idx += 1;
         self.horizontal_idx = 0;
+    }
+
+    pub fn end_of_line(&mut self) {
+        if let Some(current_row) = self.input.get_mut(self.vertical_idx) {
+            self.horizontal_idx = current_row.len();
+        }
+    }
+
+    pub fn beginning_of_line(&mut self) {
+        self.horizontal_idx = 0;
+    }
+
+    pub fn top_beginning_of_line(&mut self) {
+        self.vertical_idx = 0;
+        self.horizontal_idx = 0;
+    }
+
+    pub fn bottom_end_of_line(&mut self) {
+        self.vertical_idx = self.input.len();
+        if let Some(s) = self.input.last() {
+            self.horizontal_idx = s.len();
+        }
     }
 }
 
@@ -286,16 +348,15 @@ impl App {
         }
     }
 
-    pub fn get_cursor_position(&self) -> (u16, u16){
+    pub fn get_cursor_position(&self) -> (u16, u16) {
         if let Some(s) = self.input_tabs.get(self.input_current_tab.current_item) {
             match s {
-                Tab::Title => {(3+self.input_title.horizontal_idx as u16, 3)}
-                Tab::Tags => {
-                    (3+self.input_tags.horizontal_idx as u16, 7)
-                }
-                Tab::Text => {
-                    (3+self.input_text.horizontal_idx as u16, 11 + self.input_text.vertical_idx as u16)
-                }
+                Tab::Title => (3 + self.input_title.horizontal_idx as u16, 3),
+                Tab::Tags => (3 + self.input_tags.horizontal_idx as u16, 7),
+                Tab::Text => (
+                    3 + self.input_text.horizontal_idx as u16,
+                    11 + self.input_text.vertical_idx as u16,
+                ),
             }
         } else {
             panic!("invalid tab selected!");

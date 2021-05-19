@@ -1,6 +1,6 @@
+use crate::key::Key;
 use crate::views::app::{App, ViewState};
 use crossterm::event::{KeyCode, KeyEvent};
-use crate::key::Key;
 
 pub fn handler(app: &mut App, event: &Key) {
     match event {

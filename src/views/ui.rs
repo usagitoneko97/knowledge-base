@@ -1,4 +1,5 @@
 use crate::data::Handler;
+use crate::key::Key;
 use crate::nav;
 use crate::views::app::{App, ViewState};
 use crossterm::{
@@ -8,7 +9,6 @@ use crossterm::{
 use std::time::{Duration, Instant};
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
-use crate::key::Key;
 
 enum Event<I> {
     Input(I),
@@ -65,7 +65,7 @@ pub fn ui(h: Handler) {
         }
         match rx.recv().unwrap() {
             Event::Input(event) => {
-                if let Key::Char('q') = event {
+                if let Key::Ctrl('q') = event {
                     disable_raw_mode().expect("Error in disabling raw mode");
                     match terminal.show_cursor() {
                         std::io::Result::Ok(()) => {}
