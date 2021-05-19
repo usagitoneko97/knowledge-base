@@ -161,6 +161,62 @@ impl Input {
             self.horizontal_idx = s.len();
         }
     }
+
+    pub fn backspace_word(&mut self) {
+        if let Some(current_row) = self.input.get_mut(self.vertical_idx) {
+            if let Some(index) = current_row[..self.horizontal_idx]
+                .iter()
+                .rposition(|&e| e == ' ')
+            {
+                current_row.drain(index..self.horizontal_idx);
+                self.horizontal_idx = index;
+            } else {
+                // no space found. Delete until beginning
+                current_row.drain(..self.horizontal_idx);
+                self.horizontal_idx = 0;
+            }
+        }
+    }
+
+    pub fn delete_word(&mut self) {
+        if let Some(current_row) = self.input.get_mut(self.vertical_idx) {
+            if let Some(index) = current_row[self.horizontal_idx..]
+                .iter()
+                .position(|&e| e == ' ')
+            {
+                current_row.drain(self.horizontal_idx..index + self.horizontal_idx + 1);
+            } else {
+                // no space found. Delete until end
+                current_row.drain(self.horizontal_idx..);
+            }
+        }
+    }
+
+    pub fn move_left_word(&mut self) {
+        if let Some(current_row) = self.input.get(self.vertical_idx) {
+            if let Some(index) = current_row[..self.horizontal_idx]
+                .iter()
+                .rposition(|&e| e == ' ')
+            {
+                self.horizontal_idx = index;
+            } else {
+                self.horizontal_idx = 0;
+            }
+        }
+    }
+
+    pub fn move_right_word(&mut self) {
+        if let Some(current_row) = self.input.get(self.vertical_idx) {
+            if let Some(index) = current_row[self.horizontal_idx..]
+                .iter()
+                .position(|&e| e == ' ')
+            {
+                self.horizontal_idx = index + self.horizontal_idx + 1;
+            } else {
+                self.horizontal_idx = current_row.len();
+            }
+        }
+    }
 }
 
 pub enum FileMode {

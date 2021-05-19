@@ -47,6 +47,18 @@ pub fn handler(app: &mut App, event: &Key) {
         Key::Ctrl(CtrlKey::End) => {
             app.get_current_input().bottom_end_of_line();
         }
+        Key::Ctrl(CtrlKey::Char('w')) => {
+            app.get_current_input().backspace_word();
+        }
+        Key::Ctrl(CtrlKey::Left) => {
+            app.get_current_input().move_left_word();
+        }
+        Key::Ctrl(CtrlKey::Right) => {
+            app.get_current_input().move_right_word();
+        }
+        Key::Ctrl(CtrlKey::Delete) => {
+            app.get_current_input().delete_word();
+        }
         Key::Ctrl(CtrlKey::Char('g')) => {
             let knowledge = Knowledge::new(
                 app.input_title.get_string(),
