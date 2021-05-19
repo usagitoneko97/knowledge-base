@@ -4,8 +4,8 @@ use crate::dialog_view;
 use crate::file_view;
 use crate::key::Key;
 use crate::util::BiCycle;
+use std::fs::{remove_dir_all, remove_file};
 use std::path::{Path, PathBuf};
-use std::fs::{remove_file, remove_dir_all};
 
 pub enum ViewState {
     FileView,
@@ -237,8 +237,8 @@ pub struct App {
     pub file_hierarchy: String,
     pub files: Vec<String>,
     pub base_path: PathBuf,
-    pub file_cycle: BiCycle,
     pub file_mode: FileMode,
+    pub file_cycle_stack: Vec<BiCycle>,
 
     pub confirm: bool,
     pub confirm_text: String,
@@ -260,7 +260,7 @@ impl Default for App {
             file_hierarchy: String::default(),
             files: vec![],
             base_path: PathBuf::default(),
-            file_cycle: BiCycle::default(),
+            file_cycle_stack: vec![],
             confirm: false,
             confirm_text: String::default(),
             confirm_action: None,
@@ -276,7 +276,7 @@ impl App {
             Ok(item) => {
                 let item_len = item.len();
                 self.files = item;
-                self.file_cycle = BiCycle::new(item_len);
+                self.file_cycle_stack = vec![BiCycle::new(item_len)];
                 self.base_path = PathBuf::from(file_directory.clone());
                 self.file_mode = FileMode::Dir
             }
@@ -368,7 +368,8 @@ impl App {
             Ok(files) => {
                 let item_len = files.len();
                 self.files = files;
-                self.file_cycle = BiCycle::new(item_len);
+                self.file_cycle_stack.last_mut().unwrap().total_len = item_len;
+                self.file_mode = FileMode::Dir;
             }
             Err(_e) => {
                 self.files.clear();
@@ -379,34 +380,22 @@ impl App {
 
     pub fn enter_directory(&mut self) {
         // enter directory specify by `self.cycle.current_item`
-        let selected_file = self.files.get(self.file_cycle.current_item).unwrap();
+        let cycle = self.file_cycle_stack.last().unwrap();
+        let selected_file = self.files.get(cycle.current_item).unwrap();
         self.base_path.push(selected_file);
+        self.file_cycle_stack.push(BiCycle::new(self.files.len()));
         self.refresh_directory();
     }
 
     pub fn leave_directory(&mut self) {
         self.base_path.pop();
-        match App::get_file_list(&self.base_path) {
-            Ok(files) => {
-                let item_len = files.len();
-                self.files = files;
-                self.file_cycle = BiCycle::new(item_len);
-                self.file_mode = FileMode::Dir;
-            }
-            Err(e) => {
-                panic!(
-                    "{}",
-                    format!(
-                        "Getting file list from dir: {:?} failed with {:?}",
-                        self.base_path, e
-                    )
-                )
-            }
-        }
+        self.file_cycle_stack.pop();
+        self.refresh_directory();
     }
 
     pub fn get_current_selected_entry(&self) -> PathBuf {
-        let selected_file = self.files.get(self.file_cycle.current_item).unwrap();
+        let cycle = self.file_cycle_stack.last().unwrap();
+        let selected_file = self.files.get(cycle.current_item).unwrap();
         let mut dir_to_remove = self.base_path.clone();
         dir_to_remove.push(selected_file);
         dir_to_remove

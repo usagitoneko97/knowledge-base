@@ -4,10 +4,10 @@ use crate::views::app::{App, ViewState};
 pub fn handler(app: &mut App, event: &Key) {
     match event {
         Key::Down | Key::Char('j') => {
-            app.file_cycle.next();
+            app.file_cycle_stack.last_mut().unwrap().next();
         }
         Key::Up | Key::Char('k') => {
-            app.file_cycle.prev();
+            app.file_cycle_stack.last_mut().unwrap().prev();
         }
         Key::Enter | Key::Char('l') => {
             app.enter_directory();
@@ -26,7 +26,13 @@ pub fn handler(app: &mut App, event: &Key) {
             let entry = app.get_current_selected_entry();
             app.push_state(ViewState::DialogView);
             app.confirm_action = Some(action);
-            app.confirm_text = format!("confirm deleting: {}?", entry.file_name().and_then(|name| name.to_str()).unwrap_or("Invalid_file_name"));
+            app.confirm_text = format!(
+                "confirm deleting: {}?",
+                entry
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .unwrap_or("Invalid_file_name")
+            );
             // default it to True so we don't need to use arrow key
             app.confirm = false;
             app.previous_view = ViewState::FileView;

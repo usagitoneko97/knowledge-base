@@ -62,7 +62,10 @@ pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &App) {
                 .iter()
                 .map(|e| ListItem::new(Span::from(Span::styled(e.clone(), Style::default()))))
                 .collect();
-            let selected_file = app.files.get(app.file_cycle.current_item).unwrap();
+            let selected_file = app
+                .files
+                .get(app.file_cycle_stack.last().unwrap().current_item)
+                .unwrap();
 
             let mut selected_file_path = app.base_path.clone();
             selected_file_path.push(selected_file);
@@ -91,7 +94,7 @@ pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &App) {
                         .add_modifier(Modifier::BOLD),
                 );
             let mut list_state = ListState::default();
-            list_state.select(Some(app.file_cycle.current_item));
+            list_state.select(Some(app.file_cycle_stack.last().unwrap().current_item));
             f.render_stateful_widget(main_list, chunks[0], &mut list_state);
             f.render_widget(descriptions_widget, chunks[1])
         }
