@@ -1,21 +1,22 @@
 use crate::views::app::{App, ViewState};
 use crossterm::event::{KeyCode, KeyEvent};
+use crate::key::Key;
 
-pub fn handler(app: &mut App, event: &KeyEvent) {
-    match event.code {
-        KeyCode::Down | KeyCode::Char('j') => {
+pub fn handler(app: &mut App, event: &Key) {
+    match event {
+        Key::Down | Key::Char('j') => {
             app.file_cycle.next();
         }
-        KeyCode::Up | KeyCode::Char('k') => {
+        Key::Up | Key::Char('k') => {
             app.file_cycle.prev();
         }
-        KeyCode::Enter | KeyCode::Char('l') => {
+        Key::Enter | Key::Char('l') => {
             app.enter_directory();
         }
-        KeyCode::Char('h') => {
+        Key::Char('h') => {
             app.leave_directory();
         }
-        KeyCode::Char('a') => {
+        Key::Char('a') => {
             app.set_add_view_ref();
             app.push_state(ViewState::AddView);
         }

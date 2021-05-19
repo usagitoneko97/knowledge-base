@@ -1,25 +1,32 @@
 use crate::data::Knowledge;
 use crate::views::app::App;
 use crossterm::event::{KeyCode, KeyEvent};
+use crate::key::Key;
 
-pub fn handler(app: &mut App, event: &KeyEvent) {
-    match event.code {
-        KeyCode::Char(c) => {
-            app.get_current_input().insert(c);
+pub fn handler(app: &mut App, event: &Key) {
+    match event {
+        Key::Char(c) => {
+            app.get_current_input().insert(c.clone());
         }
-        KeyCode::Tab => {
+        Key::Tab => {
             app.input_current_tab.next();
         }
-        KeyCode::Backspace => {
+        Key::BackTab => {
+            app.input_current_tab.prev();
+        }
+        Key::Backspace => {
             app.get_current_input().backspace();
         }
-        KeyCode::Left => {
+        Key::Left => {
             app.get_current_input().move_left();
         }
-        KeyCode::Right => {
+        Key::Right => {
             app.get_current_input().move_right();
         }
-        KeyCode::Enter => {
+        Key::Enter => {
+            app.get_current_input().new_line();
+        }
+        Key::Ctrl('g') => {
             let knowledge = Knowledge::new(
                 app.input_title.get_string(),
                 app.input_text.get_string(),

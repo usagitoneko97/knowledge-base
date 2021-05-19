@@ -4,6 +4,7 @@ use crate::file_view;
 use crate::util::BiCycle;
 use crossterm::event::KeyEvent;
 use std::path::{Path, PathBuf};
+use crate::key::Key;
 
 pub enum ViewState {
     FileView,
@@ -17,38 +18,86 @@ pub enum Tab {
     Text,
 }
 
-#[derive(Default)]
 pub struct Input {
-    pub input: Vec<char>,
-    pub input_idx: usize,
+    pub input: Vec<Vec<char>>,
+    pub horizontal_idx: usize,
+    pub vertical_idx: usize,
+}
+
+impl Default for Input {
+    fn default() -> Self {
+        Self {
+            input: vec![vec![]],
+            horizontal_idx: 0,
+            vertical_idx: 0
+        }
+    }
 }
 
 impl Input {
     pub fn insert(&mut self, c: char) {
-        self.input.insert(self.input_idx, c);
-        self.input_idx = self.input_idx + 1;
+        if let Some(row) = self.input.get_mut(self.vertical_idx) {
+            row.insert(self.horizontal_idx, c);
+            self.horizontal_idx += 1;
+        }
     }
 
     pub fn get_string(&self) -> String {
-        self.input.iter().collect()
+        self.input.iter().map(|e| {
+            e.iter().collect::<String>()
+        }).collect::<Vec<_>>().join("\n")
     }
 
     pub fn backspace(&mut self) {
-        if self.input_idx > 0 {
-            self.input_idx -= 1;
-            self.input.remove(self.input_idx);
+        if self.horizontal_idx > 0 {
+            self.horizontal_idx -= 1;
+            self.input.get_mut(self.vertical_idx).unwrap().remove(self.horizontal_idx);
+        } else {
+            if self.vertical_idx > 0 {
+                let previous_row = self.input.get(self.vertical_idx).expect("Error in vertical index!").clone();
+                self.input.remove(self.vertical_idx);
+                self.vertical_idx -= 1;
+                if let Some(current_row) = self.input.get_mut(self.vertical_idx) {
+                    self.horizontal_idx = current_row.len();
+                    current_row.extend(previous_row);
+                }
+            }
         }
     }
 
     pub fn move_left(&mut self) {
-        if self.input_idx > 0 {
-            self.input_idx -= 1;
+        if self.horizontal_idx > 0 {
+            self.horizontal_idx -= 1;
+        } else {
+            if self.vertical_idx > 0 {
+                self.vertical_idx -= 1;
+                self.horizontal_idx = self.input.get(self.vertical_idx).unwrap().len();
+            }
         }
     }
+
     pub fn move_right(&mut self) {
-        if self.input_idx < self.input.len() {
-            self.input_idx += 1;
+        if let Some(current_row) = self.input.get(self.vertical_idx) {
+            if self.horizontal_idx >= current_row.len() {
+                if (self.vertical_idx +  1) < self.input.len() {
+                    self.vertical_idx += 1;
+                    self.horizontal_idx = 0;
+                }
+            } else {
+                self.horizontal_idx += 1;
+            }
         }
+    }
+
+    pub fn new_line(&mut self) {
+        let remaining: Vec<_> = if let Some(current_row) = self.input.get_mut(self.vertical_idx) {
+            current_row.drain(self.horizontal_idx..).collect()
+        } else {
+            vec![]
+        };
+        self.input.insert(self.vertical_idx+1, remaining);
+        self.vertical_idx += 1;
+        self.horizontal_idx = 0;
     }
 }
 
@@ -132,7 +181,7 @@ impl App {
         self
     }
 
-    pub fn update_state(&mut self, event: &KeyEvent) {
+    pub fn update_state(&mut self, event: &Key) {
         // return err if it reaches last state in the stack
         if let Some(state) = self.get_latest_mut_state() {
             match state {
@@ -240,12 +289,12 @@ impl App {
     pub fn get_cursor_position(&self) -> (u16, u16){
         if let Some(s) = self.input_tabs.get(self.input_current_tab.current_item) {
             match s {
-                Tab::Title => {(3+self.input_title.input_idx as u16, 3)}
+                Tab::Title => {(3+self.input_title.horizontal_idx as u16, 3)}
                 Tab::Tags => {
-                    (3+self.input_tags.input_idx as u16, 7)
+                    (3+self.input_tags.horizontal_idx as u16, 7)
                 }
                 Tab::Text => {
-                    (3+self.input_text.input_idx as u16, 11)
+                    (3+self.input_text.horizontal_idx as u16, 11 + self.input_text.vertical_idx as u16)
                 }
             }
         } else {

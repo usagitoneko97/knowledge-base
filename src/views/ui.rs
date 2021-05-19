@@ -8,6 +8,7 @@ use crossterm::{
 use std::time::{Duration, Instant};
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
+use crate::key::Key;
 
 enum Event<I> {
     Input(I),
@@ -26,6 +27,7 @@ pub fn ui(h: Handler) {
                 .unwrap_or_else(|| Duration::from_secs(0));
             if event::poll(timeout).expect("works") {
                 if let CEvent::Key(key) = event::read().expect("can read events") {
+                    let key = Key::from(key);
                     tx.send(Event::Input(key)).expect("error in sending inputs");
                 }
             }
@@ -63,7 +65,7 @@ pub fn ui(h: Handler) {
         }
         match rx.recv().unwrap() {
             Event::Input(event) => {
-                if let KeyCode::Char('q') = event.code {
+                if let Key::Char('q') = event {
                     disable_raw_mode().expect("Error in disabling raw mode");
                     match terminal.show_cursor() {
                         std::io::Result::Ok(()) => {}

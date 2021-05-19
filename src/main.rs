@@ -6,6 +6,7 @@ use std::path::PathBuf;
 mod config;
 mod data;
 mod views;
+mod key;
 
 pub use crate::views::*;
 
