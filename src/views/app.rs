@@ -251,7 +251,6 @@ impl Default for App {
         Self {
             file_mode: FileMode::Dir,
             navigation_stack: vec![ViewState::FileView],
-
             input_title: Input::default(),
             input_text: Input::default(),
             input_tags: Input::default(),
@@ -388,9 +387,11 @@ impl App {
     }
 
     pub fn leave_directory(&mut self) {
-        self.base_path.pop();
-        self.file_cycle_stack.pop();
-        self.refresh_directory();
+        if self.file_cycle_stack.len() > 1 {
+            self.base_path.pop();
+            self.file_cycle_stack.pop();
+            self.refresh_directory();
+        }
     }
 
     pub fn get_current_selected_entry(&self) -> PathBuf {

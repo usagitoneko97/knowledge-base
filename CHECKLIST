@@ -1,7 +1,7 @@
 1. Edit the content in file view
 2. Add icon/color to differentiate folder and file.
 3. Add tag support
-4. Remember cursor position in file view
-5. Help menu
-6. Key Config
-7. bug when leaving top level directory
+4. Help menu
+5. Key Config
+7. Search by title/tag/content
+8. md Syntax highlighting in view
