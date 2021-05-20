@@ -15,6 +15,9 @@ pub fn handler(app: &mut App, event: &Key) {
             app.pop_state();
             app.refresh_directory();
         }
+        Key::Esc => {
+            app.pop_state();
+        }
         _ => {}
     }
 }
