@@ -1,5 +1,6 @@
+use crate::data::Knowledge;
 use crate::key::Key;
-use crate::views::app::{App, ViewState};
+use crate::views::app::{App, FileStatus, ViewState};
 
 pub fn handler(app: &mut App, event: &Key) {
     match event {
@@ -36,6 +37,20 @@ pub fn handler(app: &mut App, event: &Key) {
             // default it to True so we don't need to use arrow key
             app.confirm = false;
             app.previous_view = ViewState::FileView;
+        }
+        Key::Char('e') => {
+            app.push_state(ViewState::AddView);
+            let entry = app.get_current_selected_entry();
+            if entry.is_file() {
+                app.set_add_view_ref();
+                let knowledge = Knowledge::from_file(entry.clone());
+                app.input_title.insert_string(&knowledge.title);
+                app.input_text.insert_string(&knowledge.text);
+                app.file_status = FileStatus::Edit(entry.clone());
+                // put focus to text
+            } else {
+                app.enter_directory();
+            }
         }
         _ => {}
     }

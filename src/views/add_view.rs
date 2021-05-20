@@ -1,6 +1,7 @@
 use crate::data::Knowledge;
 use crate::key::{CtrlKey, Key};
-use crate::views::app::{App, ViewState};
+use crate::views::app::{App, FileStatus, ViewState};
+use std::fs::remove_file;
 
 pub fn handler(app: &mut App, event: &Key) {
     match event {
@@ -72,11 +73,43 @@ pub fn handler(app: &mut App, event: &Key) {
                         panic!("Error in writing file!");
                     }
                 }
+                // remove the original referenced file for edit
+                if let FileStatus::Edit(file) = &app.file_status {
+                    let stem = file
+                        .file_stem()
+                        .and_then(|e| e.to_str())
+                        .unwrap_or("Invalid_file");
+                    if stem != app.input_title.get_string() {
+                        remove_file(file).expect("Error in removing file!");
+                    }
+                }
                 app.pop_state();
             }
             app.push_state(ViewState::DialogView);
             app.confirm_action = Some(action);
-            app.confirm_text = format!("Confirm writing file: {}?", app.input_title.get_string());
+
+            app.confirm_text = match &app.file_status {
+                FileStatus::Create => {
+                    let input_title = app.input_title.get_string();
+                    if app.file_exist(&input_title) {
+                        format!("Confirm overwrite existing file: {}?", input_title)
+                    } else {
+                        format!("Confirm writing new file: {}?", input_title)
+                    }
+                }
+                FileStatus::Edit(s) => {
+                    let stem = s
+                        .file_stem()
+                        .and_then(|e| e.to_str())
+                        .unwrap_or("Invalid_file");
+                    let title = app.input_title.get_string();
+                    if stem == title.as_str() {
+                        format!("Save file: {}?", stem)
+                    } else {
+                        format!("Confirm overwrite file: {} with: {}?", stem, title)
+                    }
+                }
+            };
             // default it to True so we don't need to use arrow key
             app.confirm = true;
         }

@@ -44,6 +44,18 @@ impl Input {
         }
     }
 
+    pub fn insert_string(&mut self, s: &str) {
+        let new_vec: Vec<_> = s
+            .split('\n')
+            .map(|e| e.chars().collect::<Vec<_>>())
+            .collect();
+        self.input = new_vec;
+        if let Some(last_input) = self.input.last() {
+            self.horizontal_idx = last_input.len();
+            self.vertical_idx = self.input.len() - 1;
+        }
+    }
+
     pub fn get_string(&self) -> String {
         self.input
             .iter()
@@ -225,9 +237,15 @@ pub enum FileMode {
     File,
 }
 
+pub enum FileStatus {
+    Create,
+    Edit(PathBuf),
+}
+
 pub struct App {
     navigation_stack: Vec<ViewState>,
 
+    pub file_status: FileStatus,
     pub input_title: Input,
     pub input_text: Input,
     pub input_tags: Input,
@@ -249,6 +267,7 @@ pub struct App {
 impl Default for App {
     fn default() -> Self {
         Self {
+            file_status: FileStatus::Create,
             file_mode: FileMode::Dir,
             navigation_stack: vec![ViewState::FileView],
             input_title: Input::default(),
@@ -300,6 +319,7 @@ impl App {
     pub fn set_add_view_ref(&mut self) -> &mut Self {
         let s = vec![Tab::Title, Tab::Tags, Tab::Text];
         let len = s.len();
+        self.file_status = FileStatus::Create;
         self.input_title = Input::default();
         self.input_text = Input::default();
         self.input_tags = Input::default();
@@ -362,6 +382,7 @@ impl App {
             .collect();
         Ok(item)
     }
+
     pub fn refresh_directory(&mut self) {
         match App::get_file_list(&self.base_path) {
             Ok(files) => {
@@ -395,11 +416,17 @@ impl App {
     }
 
     pub fn get_current_selected_entry(&self) -> PathBuf {
-        let cycle = self.file_cycle_stack.last().unwrap();
-        let selected_file = self.files.get(cycle.current_item).unwrap();
-        let mut dir_to_remove = self.base_path.clone();
-        dir_to_remove.push(selected_file);
-        dir_to_remove
+        if self.base_path.is_dir() {
+            let cycle = self.file_cycle_stack.last().unwrap();
+            let selected_file = self.files.get(cycle.current_item).unwrap();
+            let mut dir_to_remove = self.base_path.clone();
+            dir_to_remove.push(selected_file);
+            dir_to_remove
+        } else if self.base_path.is_file() {
+            self.base_path.clone()
+        } else {
+            panic!("selected path is not a file and directory")
+        }
     }
 
     pub fn remove_directory(&mut self) {
@@ -409,6 +436,7 @@ impl App {
         } else if entry.is_file() {
             remove_file(entry).expect("Error in removing this file");
         }
+        self.file_cycle_stack.last_mut().unwrap().total_len -= 1;
     }
 
     pub fn get_current_input(&mut self) -> &mut Input {
@@ -436,5 +464,12 @@ impl App {
         } else {
             panic!("invalid tab selected!");
         }
+    }
+
+    pub fn file_exist(&self, title: &str) -> bool {
+        let mut path = self.base_path.clone();
+        let file_name = String::from(title) + ".md";
+        path.push(file_name);
+        path.exists()
     }
 }

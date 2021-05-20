@@ -5,3 +5,5 @@
 5. Key Config
 7. Search by title/tag/content
 8. md Syntax highlighting in view
+- replace confirmation
+- fix # Title input causes title input to reset

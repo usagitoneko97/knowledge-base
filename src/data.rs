@@ -76,8 +76,8 @@ impl Knowledge {
 impl fmt::Display for Knowledge {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut result = String::new();
-        result.push_str(&format!("# Title: {}\n", self.title));
-        result.push_str(&format!("# Descriptions: {}\n\n", self.descriptions));
+        // result.push_str(&format!("# Title: {}\n", self.title));
+        // result.push_str(&format!("# Descriptions: {}\n\n", self.descriptions));
         result.push_str(&self.text);
         write!(f, "{}", result)
     }
