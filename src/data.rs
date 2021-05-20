@@ -25,14 +25,14 @@ impl Knowledge {
 
     pub fn from_file<P: Into<PathBuf>>(file: P) -> Self {
         let f = file.into();
-        let res = std::fs::read_to_string(f).unwrap();
-        let mut title: String = String::new();
+        let res = std::fs::read_to_string(&f).unwrap();
+        let title = f.file_stem().and_then(|e| e.to_str()).unwrap_or("INVALID_TITLE");
         let mut descriptions = String::new();
         let mut tags: Vec<String> = vec![];
         for line in res.split("\n").into_iter() {
             if line.contains("# Title:") {
-                let t: String = line.replace("# Title:", "");
-                title = t.trim().into();
+                // let t: String = line.replace("# Title:", "");
+                // title = t.trim().into();
                 continue;
             } else if line.contains("# Descriptions:") {
                 let t: String = line.replace("# Descriptions:", "");

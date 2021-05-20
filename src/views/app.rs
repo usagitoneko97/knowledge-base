@@ -458,7 +458,7 @@ impl App {
                 Tab::Tags => (3 + self.input_tags.horizontal_idx as u16, 7),
                 Tab::Text => (
                     3 + self.input_text.horizontal_idx as u16,
-                    11 + self.input_text.vertical_idx as u16,
+                    12 + self.input_text.vertical_idx as u16,
                 ),
             }
         } else {

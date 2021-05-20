@@ -67,20 +67,33 @@ pub fn handler(app: &mut App, event: &Key) {
                     String::new(),
                     app.input_tags.get_string(),
                 );
-                match knowledge.write_to_file(app.base_path.clone(), "md") {
-                    std::io::Result::Ok(()) => {}
-                    std::io::Result::Err(_e) => {
-                        panic!("Error in writing file!");
+                match &app.file_status {
+                    FileStatus::Edit(file) => {
+                        // remove the original referenced file for edit
+                        let stem = file
+                            .file_stem()
+                            .and_then(|e| e.to_str())
+                            .unwrap_or("Invalid_file");
+                        if stem != app.input_title.get_string() {
+                            remove_file(file).expect("Error in removing file!");
+                        }
+                        if app.base_path.is_file() {
+                            let mut path = app.base_path.clone();
+                            path.pop();
+                            path.push(app.input_title.get_string());
+                            std::fs::write(&path, &format!("{}", knowledge));
+                        } else {
+                            knowledge.write_to_file(app.base_path.clone(), "md").expect("Error in writing file")
+                        }
                     }
-                }
-                // remove the original referenced file for edit
-                if let FileStatus::Edit(file) = &app.file_status {
-                    let stem = file
-                        .file_stem()
-                        .and_then(|e| e.to_str())
-                        .unwrap_or("Invalid_file");
-                    if stem != app.input_title.get_string() {
-                        remove_file(file).expect("Error in removing file!");
+                    FileStatus::Create => {
+                        // base_path must be directory when we are in creat mode
+                        match knowledge.write_to_file(app.base_path.clone(), "md") {
+                            std::io::Result::Ok(()) => {}
+                            std::io::Result::Err(_e) => {
+                                panic!("Error in writing file!: {:?}, base_path: {:?}", _e, app.base_path.clone());
+                            }
+                        }
                     }
                 }
                 app.pop_state();
