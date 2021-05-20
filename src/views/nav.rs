@@ -60,7 +60,19 @@ pub fn draw_files_view<T: Backend>(f: &mut Frame<T>, app: &App) {
             let left_paths: Vec<_> = app
                 .files
                 .iter()
-                .map(|e| ListItem::new(Span::from(Span::styled(e.clone(), Style::default()))))
+                .map(|e| {
+                    let mut path = app.base_path.clone();
+                    path.push(e);
+                    let name = if path.is_file() {
+                        Span::styled(
+                            String::from("📃  ") + &e,
+                            Style::default().fg(Color::Yellow),
+                        )
+                    } else {
+                        Span::styled(String::from("📁  ") + &e, Style::default().fg(Color::Cyan))
+                    };
+                    ListItem::new(Span::from(name))
+                })
                 .collect();
             let selected_file = app
                 .files

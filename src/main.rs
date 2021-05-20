@@ -9,6 +9,7 @@ mod key;
 mod views;
 
 pub use crate::views::*;
+use std::process::exit;
 
 static CONFIG_FILE: &str = "kb.conf";
 

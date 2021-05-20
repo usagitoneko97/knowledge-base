@@ -1,9 +1,6 @@
-1. Edit the content in file view
-2. Add icon/color to differentiate folder and file.
 3. Add tag support
 4. Help menu
 5. Key Config
 7. Search by title/tag/content
 8. md Syntax highlighting in view
-- replace confirmation
 - fix # Title input causes title input to reset
