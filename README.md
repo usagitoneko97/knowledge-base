@@ -6,4 +6,7 @@ personal knowledge management in TUI written using rust. This is a demo reposito
 
 Support create, read, update, delete of markdown file using tui interface.
 
-
+### Dependencies
+- rust-tui
+- crossterm
+- serde
